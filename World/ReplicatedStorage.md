@@ -1,0 +1,380 @@
+# ReplicatedStorage
+
+Part of [[Casino Masters — World]]. 376 instances.
+
+- **CasinoCommon** `Folder`
+  - **Config** `ModuleScript` (code exported to `src/`)
+  - **GameLogic** `ModuleScript` (code exported to `src/`)
+  - **Remotes** `ModuleScript` (code exported to `src/`)
+- **Machines** `Folder`
+  - **Lucky7** `Model` — primary bottom
+    - **Part** `Part` — size 2.1, 0.2, 0.2 · pos -20.0, 2.7, -58.8 · CorrodedMetal · #38383e
+    - **Spinny3** `Part` — size 0.5, 1.4, 1.4 · pos -20.9, 4.4, -59.5 · SmoothPlastic · #ffffff
+      - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.6, 4.4, -59.5 · SmoothPlastic · #ffffff · transp 1.00
+        - **Decal** `Decal`
+    - **Wedge** `WedgePart` — size 0.2, 0.1, 0.2 · pos -20.0, 3.1, -59.3 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 0.2, 0.1, 0.2 · pos -20.0, 3.1, -58.3 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 1.0, 0.1, 0.2 · pos -20.0, 3.2, -58.8 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 1.0, 0.3, 0.2 · pos -20.0, 2.9, -58.8 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 0.5, 0.8, 0.2 · pos -20.0, 3.1, -59.6 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 0.5, 0.8, 0.2 · pos -20.0, 3.1, -58.0 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 1.0, 0.1, 0.2 · pos -20.0, 3.1, -58.8 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 1.8, 1.0, 0.0 · pos -20.1, 6.0, -58.8 · CorrodedMetal · #d4d4d5 · transp 1.00
+    - **Wedge** `WedgePart` — size 0.3, 0.2, 0.2 · pos -20.0, 3.7, -60.0 · CorrodedMetal · #38383e
+    - **Wedge** `WedgePart` — size 0.3, 0.2, 0.2 · pos -20.0, 3.7, -57.6 · CorrodedMetal · #38383e
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -20.1, 4.3, -58.5 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.9, 3.7, -60.3 · CorrodedMetal · #d4d4d5
+    - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.9, 3.7, -57.3 · CorrodedMetal · #d4d4d5
+    - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -20.0, 3.7, -57.4 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -20.0, 3.7, -60.2 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -20.1, 3.8, -58.8 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -20.1, 4.3, -58.4 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -20.1, 4.3, -57.8 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -20.1, 4.9, -58.1 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -20.1, 4.9, -58.8 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 2.1, 0.2, 0.2 · pos -20.0, 3.7, -58.8 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -20.1, 4.3, -59.8 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -20.1, 4.3, -59.2 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -20.1, 4.9, -59.5 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -20.1, 3.8, -59.5 · CorrodedMetal · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -20.1, 4.3, -59.1 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 2.7, 0.1, 0.2 · pos -20.0, 3.6, -58.8 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 0.3, 1.8, 0.2 · pos -20.0, 1.9, -60.0 · CorrodedMetal · #38383e
+    - **Part** `Part` — size 2.7, 4.3, 0.1 · pos -21.7, 3.2, -58.8 · CorrodedMetal · #38383e
+    - **Part** `Part` — size 2.7, 1.8, 0.2 · pos -21.6, 1.9, -58.8 · CorrodedMetal · #38383e
+    - **Part** `Part` — size 0.1, 1.8, 1.8 · pos -20.9, 4.5, -60.3 · CorrodedMetal · #d4d4d5
+    - **Part** `Part` — size 0.1, 2.7, 2.0 · pos -20.8, 2.2, -60.3 · CorrodedMetal · #d4d4d5
+    - **Part** `Part` — size 0.1, 1.8, 1.8 · pos -20.9, 4.5, -57.3 · CorrodedMetal · #d4d4d5
+    - **Part** `Part` — size 2.8, 0.1, 2.0 · pos -20.8, 0.9, -58.8 · CorrodedMetal · #d4d4d5
+    - **Part** `Part` — size 0.1, 2.7, 2.0 · pos -20.8, 2.2, -57.3 · CorrodedMetal · #d4d4d5
+    - **Part** `Part` — size 0.3, 0.9, 0.2 · pos -20.0, 3.0, -60.0 · CorrodedMetal · #38383e
+    - **Part** `Part` — size 0.3, 0.9, 0.2 · pos -20.0, 3.0, -57.6 · CorrodedMetal · #38383e
+    - **Part** `Part` — size 2.1, 1.1, 0.3 · pos -19.9, 1.9, -58.8 · CorrodedMetal · #635f62
+    - **Part** `Part` — size 0.3, 1.0, 1.6 · pos -20.9, 4.3, -60.0 · CorrodedMetal · #38383e
+    - **Part** `Part` — size 2.7, 1.5, 1.6 · pos -20.9, 3.0, -58.8 · CorrodedMetal · #38383e
+    - **Part** `Part` — size 0.3, 1.0, 1.6 · pos -20.9, 4.3, -57.6 · CorrodedMetal · #38383e
+    - **Part** `Part` — size 2.1, 0.1, 0.1 · pos -19.9, 1.3, -58.8 · CorrodedMetal · #d4d4d5
+    - **Union** `UnionOperation` — size 1.8, 1.7, 3.1 · pos -20.9, 6.2, -58.8 · CorrodedMetal · #d4d4d5
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -20.1, 3.8, -58.1 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 3.1, 0.1, 1.8 · pos -20.9, 5.4, -58.8 · CorrodedMetal · #d4d4d5
+    - **Part** `Part` — size 2.7, 0.3, 0.2 · pos -20.0, 1.2, -58.8 · CorrodedMetal · #38383e
+    - **bottom** `Part` — size 2.7, 0.1, 1.8 · pos -20.8, 1.0, -58.8 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 0.3, 1.8, 0.2 · pos -20.0, 1.9, -57.6 · CorrodedMetal · #38383e
+    - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.9, 4.9, -60.0 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 0.1, 1.3, 1.6 · pos -20.9, 4.2, -57.4 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 0.1, 2.6, 1.8 · pos -20.8, 2.3, -57.4 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 0.1, 1.3, 0.1 · pos -19.9, 1.9, -59.9 · CorrodedMetal · #d4d4d5
+    - **Part** `Part` — size 2.1, 0.1, 0.1 · pos -19.9, 2.5, -58.8 · CorrodedMetal · #d4d4d5
+    - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.9, 3.8, -60.0 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 0.1, 1.3, 0.1 · pos -19.9, 1.9, -57.7 · CorrodedMetal · #d4d4d5
+    - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.9, 3.8, -57.6 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.9, 4.9, -57.6 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 2.8, 0.4, 1.6 · pos -20.9, 5.1, -58.8 · CorrodedMetal · #38383e
+    - **Part** `Part` — size 0.1, 1.3, 1.6 · pos -20.9, 4.2, -60.2 · CorrodedMetal · #fefeff
+    - **Part** `Part` — size 0.1, 2.6, 1.8 · pos -20.8, 2.3, -60.2 · CorrodedMetal · #fefeff
+    - **Spinny2** `Part` — size 0.5, 1.4, 1.4 · pos -20.9, 4.4, -58.8 · SmoothPlastic · #ffffff
+      - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.6, 4.4, -58.8 · SmoothPlastic · #ffffff · transp 1.00
+        - **Decal** `Decal`
+    - **Union** `UnionOperation` — size 2.8, 1.5, 1.7 · pos -20.9, 6.1, -58.8 · CorrodedMetal · #38383e
+    - **Part** `Part` — size 1.0, 0.3, 0.2 · pos -20.0, 3.4, -58.8 · CorrodedMetal · #fefeff
+    - **Spinny1** `Part` — size 0.5, 1.4, 1.4 · pos -20.9, 4.4, -58.1 · SmoothPlastic · #ffffff
+      - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.6, 4.4, -58.1 · SmoothPlastic · #ffffff · transp 1.00
+        - **Decal** `Decal`
+  - **Slot Machine** `Model`
+    - **Part** `Part` — size 2.1, 0.2, 0.2 · pos -19.5, 2.8, -63.8 · SmoothPlastic · #38383e
+    - **Spinny2** `Part` — size 0.5, 1.4, 1.4 · pos -20.4, 4.5, -63.8 · SmoothPlastic · #ffffff
+      - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.1, 4.5, -63.8 · SmoothPlastic · #ffffff · transp 1.00
+        - **Decal** `Decal`
+    - **Wedge** `WedgePart` — size 0.2, 0.1, 0.2 · pos -19.5, 3.3, -64.3 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.2, 0.1, 0.2 · pos -19.5, 3.3, -63.4 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.0, 0.1, 0.2 · pos -19.5, 3.3, -63.8 · Marble · #fefeff
+    - **Part** `Part` — size 1.0, 0.3, 0.2 · pos -19.5, 3.0, -63.8 · Marble · #fefeff
+    - **Part** `Part` — size 0.5, 0.8, 0.2 · pos -19.5, 3.3, -64.6 · Marble · #fefeff
+    - **Part** `Part` — size 0.5, 0.8, 0.2 · pos -19.5, 3.3, -63.1 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.0, 0.1, 0.2 · pos -19.5, 3.2, -63.8 · Marble · #fefeff
+    - **Part** `Part` — size 1.8, 1.0, 0.0 · pos -19.6, 6.2, -63.9 · Metal · #d4d4d5 · transp 1.00
+    - **Wedge** `WedgePart` — size 0.3, 0.2, 0.2 · pos -19.5, 3.8, -65.0 · SmoothPlastic · #38383e
+    - **Wedge** `WedgePart` — size 0.3, 0.2, 0.2 · pos -19.5, 3.8, -62.6 · SmoothPlastic · #38383e
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -63.5 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.4, 3.8, -65.3 · Metal · #d4d4d5
+    - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.4, 3.8, -62.4 · Metal · #d4d4d5
+    - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.5, 3.8, -62.4 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.5, 3.8, -65.2 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 3.9, -63.8 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -63.4 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -62.8 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 5.0, -63.1 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 5.0, -63.8 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 2.1, 0.2, 0.2 · pos -19.5, 3.8, -63.8 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -64.8 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -64.2 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 5.0, -64.5 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 3.9, -64.5 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -64.1 · Marble · #fefeff
+    - **Part** `Part` — size 2.7, 0.1, 0.2 · pos -19.5, 3.7, -63.8 · Marble · #fefeff
+    - **Part** `Part` — size 0.3, 1.8, 0.2 · pos -19.5, 2.1, -65.1 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 2.7, 4.3, 0.1 · pos -21.2, 3.3, -63.8 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 2.7, 1.8, 0.2 · pos -21.1, 2.1, -63.8 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 0.1, 1.8, 1.8 · pos -20.4, 4.6, -65.3 · Metal · #d4d4d5
+    - **Part** `Part` — size 0.1, 2.7, 2.0 · pos -20.3, 2.4, -65.3 · Metal · #d4d4d5
+    - **Part** `Part` — size 0.1, 1.8, 1.8 · pos -20.4, 4.6, -62.4 · Metal · #d4d4d5
+    - **Part** `Part` — size 2.8, 0.1, 2.0 · pos -20.3, 1.1, -63.8 · Metal · #d4d4d5
+    - **Part** `Part` — size 0.1, 2.7, 2.0 · pos -20.3, 2.4, -62.4 · Metal · #d4d4d5
+    - **Part** `Part` — size 0.3, 0.9, 0.2 · pos -19.5, 3.2, -65.0 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 0.3, 0.9, 0.2 · pos -19.5, 3.2, -62.6 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 2.1, 1.1, 0.3 · pos -19.4, 2.1, -63.8 · SmoothPlastic · #635f62
+    - **Part** `Part` — size 0.3, 1.0, 1.6 · pos -20.4, 4.5, -65.0 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 2.7, 1.5, 1.6 · pos -20.4, 3.1, -63.8 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 0.3, 1.0, 1.6 · pos -20.4, 4.5, -62.6 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 2.1, 0.1, 0.1 · pos -19.4, 1.5, -63.8 · Metal · #d4d4d5
+    - **Spinny3** `Part` — size 0.5, 1.4, 1.4 · pos -20.4, 4.5, -64.5 · SmoothPlastic · #ffffff
+      - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.1, 4.5, -64.5 · SmoothPlastic · #ffffff · transp 1.00
+        - **Decal** `Decal`
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 3.9, -63.1 · Marble · #fefeff
+    - **Part** `Part` — size 3.1, 0.1, 1.8 · pos -20.4, 5.5, -63.8 · Metal · #d4d4d5
+    - **Part** `Part` — size 2.7, 0.3, 0.2 · pos -19.5, 1.3, -63.8 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 2.7, 0.1, 1.8 · pos -20.3, 1.2, -63.8 · Marble · #fefeff
+    - **Part** `Part` — size 0.3, 1.8, 0.2 · pos -19.5, 2.1, -62.6 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 5.0, -65.0 · Marble · #fefeff
+    - **Part** `Part` — size 0.1, 1.3, 1.6 · pos -20.4, 4.4, -62.4 · Marble · #fefeff
+    - **Part** `Part` — size 0.1, 2.6, 1.8 · pos -20.3, 2.4, -62.4 · Marble · #fefeff
+    - **Part** `Part` — size 0.1, 1.3, 0.1 · pos -19.4, 2.1, -64.9 · Metal · #d4d4d5
+    - **Part** `Part` — size 2.1, 0.1, 0.1 · pos -19.4, 2.7, -63.8 · Metal · #d4d4d5
+    - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 3.9, -65.0 · Marble · #fefeff
+    - **Part** `Part` — size 0.1, 1.3, 0.1 · pos -19.4, 2.1, -62.8 · Metal · #d4d4d5
+    - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 3.9, -62.6 · Marble · #fefeff
+    - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 5.0, -62.6 · Marble · #fefeff
+    - **Part** `Part` — size 2.8, 0.4, 1.6 · pos -20.4, 5.3, -63.8 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 0.1, 1.3, 1.6 · pos -20.4, 4.4, -65.2 · Marble · #fefeff
+    - **Part** `Part` — size 0.1, 2.6, 1.8 · pos -20.3, 2.4, -65.2 · Marble · #fefeff
+    - **Lever** `UnionOperation` — size 0.4, 2.2, 1.5 · pos -19.8, 4.7, -65.5 · Metal · #ff0000
+      - **Sound** `Sound` — rbxassetid://177266782
+      - **Slots** `Sound` — rbxassetid://3299794881
+      - **Winner** `Sound` — rbxassetid://4879566787
+    - **LEDs** `UnionOperation` — size 2.4, 1.3, 0.1 · pos -19.6, 6.3, -63.8 · Neon · #e7a15b
+    - **Part** `Part` — size 1.0, 0.3, 0.2 · pos -19.5, 3.5, -63.8 · Marble · #fefeff
+    - **Spinny1** `Part` — size 0.5, 1.4, 1.4 · pos -20.4, 4.5, -63.1 · SmoothPlastic · #ffffff
+      - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.1, 4.5, -63.1 · SmoothPlastic · #ffffff · transp 1.00
+        - **Decal** `Decal`
+    - **Union** `UnionOperation` — size 1.8, 1.7, 3.1 · pos -20.4, 6.3, -63.8 · Metal · #d4d4d5
+    - **Union** `UnionOperation` — size 2.8, 1.5, 1.7 · pos -20.4, 6.3, -63.8 · SmoothPlastic · #38383e
+  - **Tripple slot** `Model`
+    - **Slot Machine** `Model`
+      - **Part** `Part` — size 2.1, 0.2, 0.2 · pos -19.5, 2.8, -68.8 · SmoothPlastic · #38383e
+      - **Spinny3** `Part` — size 0.5, 1.4, 1.4 · pos -20.4, 4.5, -69.5 · SmoothPlastic · #ffffff
+        - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.1, 4.5, -69.5 · SmoothPlastic · #ffffff · transp 1.00
+          - **Decal** `Decal`
+      - **Wedge** `WedgePart` — size 0.2, 0.1, 0.2 · pos -19.5, 3.3, -69.3 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.2, 0.1, 0.2 · pos -19.5, 3.3, -68.4 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.0, 0.1, 0.2 · pos -19.5, 3.3, -68.8 · Marble · #fefeff
+      - **Part** `Part` — size 1.0, 0.3, 0.2 · pos -19.5, 3.0, -68.8 · Marble · #fefeff
+      - **Part** `Part` — size 0.5, 0.8, 0.2 · pos -19.5, 3.3, -69.6 · Marble · #fefeff
+      - **Part** `Part` — size 0.5, 0.8, 0.2 · pos -19.5, 3.3, -68.1 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.0, 0.1, 0.2 · pos -19.5, 3.2, -68.8 · Marble · #fefeff
+      - **Part** `Part` — size 1.8, 1.0, 0.0 · pos -19.6, 6.2, -68.9 · Metal · #d4d4d5 · transp 1.00
+      - **Wedge** `WedgePart` — size 0.3, 0.2, 0.2 · pos -19.5, 3.8, -70.0 · SmoothPlastic · #38383e
+      - **Wedge** `WedgePart` — size 0.3, 0.2, 0.2 · pos -19.5, 3.8, -67.6 · SmoothPlastic · #38383e
+      - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -68.5 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.4, 3.8, -70.3 · Metal · #d4d4d5
+      - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.4, 3.8, -67.4 · Metal · #d4d4d5
+      - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.5, 3.8, -67.4 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.5, 3.8, -70.2 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 3.9, -68.8 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -68.4 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -67.8 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 5.0, -68.1 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 5.0, -68.8 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 2.1, 0.2, 0.2 · pos -19.5, 3.8, -68.8 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -69.8 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -69.2 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 5.0, -69.5 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 3.9, -69.5 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -69.1 · Marble · #fefeff
+      - **Part** `Part` — size 2.7, 0.1, 0.2 · pos -19.5, 3.7, -68.8 · Marble · #fefeff
+      - **Part** `Part` — size 0.3, 1.8, 0.2 · pos -19.5, 2.1, -70.1 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 2.7, 4.3, 0.1 · pos -21.2, 3.3, -68.8 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 2.7, 1.8, 0.2 · pos -21.1, 2.1, -68.8 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 0.1, 1.8, 1.8 · pos -20.4, 4.6, -70.3 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.1, 2.7, 2.0 · pos -20.3, 2.4, -70.3 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.1, 1.8, 1.8 · pos -20.4, 4.6, -67.4 · Metal · #d4d4d5
+      - **Part** `Part` — size 2.8, 0.1, 2.0 · pos -20.3, 1.1, -68.8 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.1, 2.7, 2.0 · pos -20.3, 2.4, -67.4 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.3, 0.9, 0.2 · pos -19.5, 3.2, -70.0 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 0.3, 0.9, 0.2 · pos -19.5, 3.2, -67.6 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 2.1, 1.1, 0.3 · pos -19.4, 2.1, -68.8 · SmoothPlastic · #635f62
+      - **Part** `Part` — size 0.3, 1.0, 1.6 · pos -20.4, 4.5, -70.0 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 2.7, 1.5, 1.6 · pos -20.4, 3.1, -68.8 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 0.3, 1.0, 1.6 · pos -20.4, 4.5, -67.6 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 2.1, 0.1, 0.1 · pos -19.4, 1.5, -68.8 · Metal · #d4d4d5
+      - **Spinny1** `Part` — size 0.5, 1.4, 1.4 · pos -20.4, 4.5, -68.1 · SmoothPlastic · #ffffff
+        - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.1, 4.5, -68.1 · SmoothPlastic · #ffffff · transp 1.00
+          - **Decal** `Decal`
+      - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 3.9, -68.1 · Marble · #fefeff
+      - **Part** `Part` — size 3.1, 0.1, 1.8 · pos -20.4, 5.5, -68.8 · Metal · #d4d4d5
+      - **Part** `Part` — size 2.7, 0.3, 0.2 · pos -19.5, 1.3, -68.8 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 2.7, 0.1, 1.8 · pos -20.3, 1.2, -68.8 · Marble · #fefeff
+      - **Part** `Part` — size 0.3, 1.8, 0.2 · pos -19.5, 2.1, -67.6 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 5.0, -70.0 · Marble · #fefeff
+      - **Part** `Part` — size 0.1, 1.3, 1.6 · pos -20.4, 4.4, -67.4 · Marble · #fefeff
+      - **Part** `Part` — size 0.1, 2.6, 1.8 · pos -20.3, 2.4, -67.4 · Marble · #fefeff
+      - **Part** `Part` — size 0.1, 1.3, 0.1 · pos -19.4, 2.1, -69.9 · Metal · #d4d4d5
+      - **Part** `Part` — size 2.1, 0.1, 0.1 · pos -19.4, 2.7, -68.8 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 3.9, -70.0 · Marble · #fefeff
+      - **Part** `Part` — size 0.1, 1.3, 0.1 · pos -19.4, 2.1, -67.8 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 3.9, -67.6 · Marble · #fefeff
+      - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 5.0, -67.6 · Marble · #fefeff
+      - **Part** `Part` — size 2.8, 0.4, 1.6 · pos -20.4, 5.3, -68.8 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 0.1, 1.3, 1.6 · pos -20.4, 4.4, -70.2 · Marble · #fefeff
+      - **Part** `Part` — size 0.1, 2.6, 1.8 · pos -20.3, 2.4, -70.2 · Marble · #fefeff
+      - **Spinny2** `Part` — size 0.5, 1.4, 1.4 · pos -20.4, 4.5, -68.8 · SmoothPlastic · #ffffff
+        - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.1, 4.5, -68.8 · SmoothPlastic · #ffffff · transp 1.00
+          - **Decal** `Decal`
+      - **Part** `Part` — size 1.0, 0.3, 0.2 · pos -19.5, 3.5, -68.8 · Marble · #fefeff
+    - **Slot Machine** `Model`
+      - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 3.9, -74.1 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -75.1 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 3.9, -75.5 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 5.0, -75.5 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -75.2 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -75.8 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 2.1, 0.2, 0.2 · pos -19.5, 3.8, -74.8 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 5.0, -74.8 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 5.0, -74.1 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -73.8 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -74.4 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 3.9, -74.8 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.5, 3.8, -76.2 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.5, 3.8, -73.4 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.4, 3.8, -73.4 · Metal · #d4d4d5
+      - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.4, 3.8, -76.3 · Metal · #d4d4d5
+      - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -74.5 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.3, 0.2, 0.2 · pos -19.5, 3.8, -73.6 · SmoothPlastic · #38383e
+      - **Wedge** `WedgePart` — size 0.3, 0.2, 0.2 · pos -19.5, 3.8, -76.0 · SmoothPlastic · #38383e
+      - **Wedge** `WedgePart` — size 1.0, 0.1, 0.2 · pos -19.5, 3.2, -74.8 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 1.0, 0.1, 0.2 · pos -19.5, 3.3, -74.8 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.2, 0.1, 0.2 · pos -19.5, 3.3, -74.4 · Marble · #fefeff
+      - **Wedge** `WedgePart` — size 0.2, 0.1, 0.2 · pos -19.5, 3.3, -75.3 · Marble · #fefeff
+      - **Spinny3** `Part` — size 0.5, 1.4, 1.4 · pos -20.4, 4.5, -75.5 · SmoothPlastic · #ffffff
+        - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.1, 4.5, -75.5 · SmoothPlastic · #ffffff · transp 1.00
+          - **Decal** `Decal`
+      - **Spinny2** `Part` — size 0.5, 1.4, 1.4 · pos -20.4, 4.5, -74.8 · SmoothPlastic · #ffffff
+        - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.1, 4.5, -74.8 · SmoothPlastic · #ffffff · transp 1.00
+          - **Decal** `Decal`
+      - **Spinny1** `Part` — size 0.5, 1.4, 1.4 · pos -20.4, 4.5, -74.1 · SmoothPlastic · #ffffff
+        - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.1, 4.5, -74.1 · SmoothPlastic · #ffffff · transp 1.00
+          - **Decal** `Decal`
+      - **Part** `Part` — size 1.0, 0.3, 0.2 · pos -19.5, 3.5, -74.8 · Marble · #fefeff
+      - **Part** `Part` — size 0.1, 2.6, 1.8 · pos -20.3, 2.4, -76.2 · Marble · #fefeff
+      - **Part** `Part` — size 0.1, 1.3, 1.6 · pos -20.4, 4.4, -76.2 · Marble · #fefeff
+      - **Part** `Part` — size 2.8, 0.4, 1.6 · pos -20.4, 5.3, -74.8 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 5.0, -73.6 · Marble · #fefeff
+      - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 3.9, -73.6 · Marble · #fefeff
+      - **Part** `Part` — size 0.1, 1.3, 0.1 · pos -19.4, 2.1, -73.8 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 3.9, -76.0 · Marble · #fefeff
+      - **Part** `Part` — size 2.1, 0.1, 0.1 · pos -19.4, 2.7, -74.8 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.1, 1.3, 0.1 · pos -19.4, 2.1, -75.9 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.1, 2.6, 1.8 · pos -20.3, 2.4, -73.4 · Marble · #fefeff
+      - **Part** `Part` — size 0.1, 1.3, 1.6 · pos -20.4, 4.4, -73.4 · Marble · #fefeff
+      - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 5.0, -76.0 · Marble · #fefeff
+      - **Part** `Part` — size 0.3, 1.8, 0.2 · pos -19.5, 2.1, -73.6 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 2.7, 0.1, 1.8 · pos -20.3, 1.2, -74.8 · Marble · #fefeff
+      - **Part** `Part` — size 2.7, 0.3, 0.2 · pos -19.5, 1.3, -74.8 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 3.1, 0.1, 1.8 · pos -20.4, 5.5, -74.8 · Metal · #d4d4d5
+      - **Part** `Part` — size 2.1, 0.1, 0.1 · pos -19.4, 1.5, -74.8 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.3, 1.0, 1.6 · pos -20.4, 4.5, -73.6 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 2.7, 1.5, 1.6 · pos -20.4, 3.1, -74.8 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 0.3, 1.0, 1.6 · pos -20.4, 4.5, -76.0 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 2.1, 1.1, 0.3 · pos -19.4, 2.1, -74.8 · SmoothPlastic · #635f62
+      - **Part** `Part` — size 0.3, 0.9, 0.2 · pos -19.5, 3.2, -73.6 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 0.3, 0.9, 0.2 · pos -19.5, 3.2, -76.0 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 0.1, 2.7, 2.0 · pos -20.3, 2.4, -73.4 · Metal · #d4d4d5
+      - **Part** `Part` — size 2.8, 0.1, 2.0 · pos -20.3, 1.1, -74.8 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.1, 1.8, 1.8 · pos -20.4, 4.6, -73.4 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.1, 2.7, 2.0 · pos -20.3, 2.4, -76.3 · Metal · #d4d4d5
+      - **Part** `Part` — size 0.1, 1.8, 1.8 · pos -20.4, 4.6, -76.3 · Metal · #d4d4d5
+      - **Part** `Part` — size 2.7, 1.8, 0.2 · pos -21.1, 2.1, -74.8 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 2.7, 4.3, 0.1 · pos -21.2, 3.3, -74.8 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 0.3, 1.8, 0.2 · pos -19.5, 2.1, -76.1 · SmoothPlastic · #38383e
+      - **Part** `Part` — size 2.7, 0.1, 0.2 · pos -19.5, 3.7, -74.8 · Marble · #fefeff
+      - **Part** `Part` — size 1.8, 1.0, 0.0 · pos -19.6, 6.2, -74.9 · Metal · #d4d4d5 · transp 1.00
+      - **Part** `Part` — size 0.5, 0.8, 0.2 · pos -19.5, 3.3, -74.1 · Marble · #fefeff
+      - **Part** `Part` — size 0.5, 0.8, 0.2 · pos -19.5, 3.3, -75.6 · Marble · #fefeff
+      - **Part** `Part` — size 1.0, 0.3, 0.2 · pos -19.5, 3.0, -74.8 · Marble · #fefeff
+      - **Part** `Part` — size 2.1, 0.2, 0.2 · pos -19.5, 2.8, -74.8 · SmoothPlastic · #38383e
+      - **Lever** `UnionOperation` — size 0.4, 2.2, 1.5 · pos -19.8, 4.7, -76.5 · Metal · #ff0000
+        - **Sound** `Sound` — rbxassetid://177266782
+        - **Slots** `Sound` — rbxassetid://3299794881
+        - **Winner** `Sound` — rbxassetid://4879566787
+    - **Part** `Part` — size 2.1, 0.2, 0.2 · pos -19.5, 2.8, -71.8 · SmoothPlastic · #38383e
+    - **Union** `UnionOperation` — size 8.5, 2.1, 1.7 · pos -20.4, 6.5, -71.8 · SmoothPlastic · #38383e
+    - **Wedge** `WedgePart` — size 0.2, 0.1, 0.2 · pos -19.5, 3.3, -72.3 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.2, 0.1, 0.2 · pos -19.5, 3.3, -71.4 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.0, 0.1, 0.2 · pos -19.5, 3.3, -71.8 · Marble · #fefeff
+    - **Part** `Part` — size 1.0, 0.3, 0.2 · pos -19.5, 3.0, -71.8 · Marble · #fefeff
+    - **Part** `Part` — size 0.5, 0.8, 0.2 · pos -19.5, 3.3, -72.6 · Marble · #fefeff
+    - **Part** `Part` — size 0.5, 0.8, 0.2 · pos -19.5, 3.3, -71.1 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.0, 0.1, 0.2 · pos -19.5, 3.2, -71.8 · Marble · #fefeff
+    - **Part** `Part` — size 1.8, 1.0, 0.0 · pos -19.6, 6.2, -71.9 · Metal · #d4d4d5 · transp 1.00
+    - **Wedge** `WedgePart` — size 0.3, 0.2, 0.2 · pos -19.5, 3.8, -73.0 · SmoothPlastic · #38383e
+    - **Wedge** `WedgePart` — size 0.3, 0.2, 0.2 · pos -19.5, 3.8, -70.6 · SmoothPlastic · #38383e
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -71.5 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.4, 3.8, -73.3 · Metal · #d4d4d5
+    - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.4, 3.8, -70.4 · Metal · #d4d4d5
+    - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.5, 3.8, -70.4 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.1, 0.2, 0.2 · pos -19.5, 3.8, -73.2 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 3.9, -71.8 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -71.4 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -70.8 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 5.0, -71.1 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 5.0, -71.8 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 2.1, 0.2, 0.2 · pos -19.5, 3.8, -71.8 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -72.8 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -72.2 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 5.0, -72.5 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 3.9, -72.5 · Marble · #fefeff
+    - **Wedge** `WedgePart` — size 1.1, 0.1, 0.2 · pos -19.7, 4.5, -72.1 · Marble · #fefeff
+    - **Part** `Part` — size 2.7, 0.1, 0.2 · pos -19.5, 3.7, -71.8 · Marble · #fefeff
+    - **Part** `Part` — size 0.3, 1.8, 0.2 · pos -19.5, 2.1, -73.1 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 2.7, 4.3, 0.1 · pos -21.2, 3.3, -71.8 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 2.7, 1.8, 0.2 · pos -21.1, 2.1, -71.8 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 0.1, 1.8, 1.8 · pos -20.4, 4.6, -73.3 · Metal · #d4d4d5
+    - **Part** `Part` — size 0.1, 2.7, 2.0 · pos -20.3, 2.4, -73.3 · Metal · #d4d4d5
+    - **Part** `Part` — size 0.1, 1.8, 1.8 · pos -20.4, 4.6, -70.4 · Metal · #d4d4d5
+    - **Part** `Part` — size 2.8, 0.1, 2.0 · pos -20.3, 1.1, -71.8 · Metal · #d4d4d5
+    - **Part** `Part` — size 0.1, 2.7, 2.0 · pos -20.3, 2.4, -70.4 · Metal · #d4d4d5
+    - **Part** `Part` — size 0.3, 0.9, 0.2 · pos -19.5, 3.2, -73.0 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 0.3, 0.9, 0.2 · pos -19.5, 3.2, -70.6 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 2.1, 1.1, 0.3 · pos -19.4, 2.1, -71.8 · SmoothPlastic · #635f62
+    - **Part** `Part` — size 0.3, 1.0, 1.6 · pos -20.4, 4.5, -73.0 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 2.7, 1.5, 1.6 · pos -20.4, 3.1, -71.8 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 0.3, 1.0, 1.6 · pos -20.4, 4.5, -70.6 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 2.1, 0.1, 0.1 · pos -19.4, 1.5, -71.8 · Metal · #d4d4d5
+    - **Union** `UnionOperation` — size 1.8, 2.3, 9.1 · pos -20.4, 6.6, -71.8 · Metal · #d4d4d5
+    - **Wedge** `WedgePart` — size 0.7, 0.1, 0.2 · pos -19.7, 3.9, -71.1 · Marble · #fefeff
+    - **Part** `Part` — size 3.1, 0.1, 1.8 · pos -20.4, 5.5, -71.8 · Metal · #d4d4d5
+    - **Part** `Part` — size 2.7, 0.3, 0.2 · pos -19.5, 1.3, -71.8 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 2.7, 0.1, 1.8 · pos -20.3, 1.2, -71.8 · Marble · #fefeff
+    - **Part** `Part` — size 0.3, 1.8, 0.2 · pos -19.5, 2.1, -70.6 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 5.0, -73.0 · Marble · #fefeff
+    - **Part** `Part` — size 0.1, 1.3, 1.6 · pos -20.4, 4.4, -70.4 · Marble · #fefeff
+    - **Part** `Part` — size 0.1, 2.6, 1.8 · pos -20.3, 2.4, -70.4 · Marble · #fefeff
+    - **Part** `Part` — size 0.1, 1.3, 0.1 · pos -19.4, 2.1, -72.9 · Metal · #d4d4d5
+    - **Part** `Part` — size 2.1, 0.1, 0.1 · pos -19.4, 2.7, -71.8 · Metal · #d4d4d5
+    - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 3.9, -73.0 · Marble · #fefeff
+    - **Part** `Part` — size 0.1, 1.3, 0.1 · pos -19.4, 2.1, -70.8 · Metal · #d4d4d5
+    - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 3.9, -70.6 · Marble · #fefeff
+    - **Part** `Part` — size 0.3, 0.1, 1.6 · pos -20.4, 5.0, -70.6 · Marble · #fefeff
+    - **Part** `Part` — size 2.8, 0.4, 1.6 · pos -20.4, 5.3, -71.8 · SmoothPlastic · #38383e
+    - **Part** `Part` — size 0.1, 1.3, 1.6 · pos -20.4, 4.4, -73.2 · Marble · #fefeff
+    - **Part** `Part` — size 0.1, 2.6, 1.8 · pos -20.3, 2.4, -73.2 · Marble · #fefeff
+    - **Spinny2** `Part` — size 0.5, 1.4, 1.4 · pos -20.4, 4.5, -71.8 · SmoothPlastic · #ffffff
+      - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.1, 4.5, -71.8 · SmoothPlastic · #ffffff · transp 1.00
+        - **Decal** `Decal`
+    - **LEDs** `UnionOperation` — size 8.0, 1.7, 0.1 · pos -19.6, 6.5, -71.9 · Neon · #e7a15b
+    - **Part** `Part` — size 1.0, 0.3, 0.2 · pos -19.5, 3.5, -71.8 · Marble · #fefeff
+    - **Spinny1** `Part` — size 0.5, 1.4, 1.4 · pos -20.4, 4.5, -71.1 · SmoothPlastic · #ffffff
+      - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.1, 4.5, -71.1 · SmoothPlastic · #ffffff · transp 1.00
+        - **Decal** `Decal`
+    - **Spinny3** `Part` — size 0.5, 1.4, 1.4 · pos -20.4, 4.5, -72.5 · SmoothPlastic · #ffffff
+      - **Decor** `Part` — size 0.5, 0.9, 1.0 · pos -20.1, 4.5, -72.5 · SmoothPlastic · #ffffff · transp 1.00
+        - **Decal** `Decal`

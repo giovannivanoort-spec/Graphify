@@ -1,0 +1,102 @@
+# Workspace
+
+Part of [[Casino Masters — World]]. 100 instances.
+
+- **Part** `Part` — size 625.0, 1.0, 51.0 · pos -30.5, 0.5, 43.5 · Asphalt · #0d0d0d
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **Plot** `Part` — size 79.0, 1.0, 81.0 · pos 83.5, 0.5, 126.5 · Fabric · #1f2024
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **Part** `Part` — size 625.0, 0.3, 16.6 · pos -30.5, 0.1, -42.3 · Plastic · #676668
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **Part** `Part` — size 625.0, 0.3, 167.4 · pos -30.5, 0.1, -134.3 · Plastic · #1c5931
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **plot** `Part` — size 79.0, 1.0, 81.0 · pos 5.9, 0.5, -91.5 · Fabric · #1f2024
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **Part** `Part` — size 626.0, 0.3, 16.6 · pos -31.0, 0.1, 77.3 · Plastic · #676668
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **plot** `Part` — size 79.0, 1.0, 81.0 · pos 176.9, 0.5, -91.5 · Fabric · #1f2024
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **plot** `Part` — size 79.0, 1.0, 81.0 · pos -80.5, 0.5, 126.5 · Fabric · #1f2024
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **Part** `Part` — size 626.0, 0.3, 167.4 · pos -31.0, 0.1, 169.3 · Plastic · #1c5931
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **Part** `Part` — size 563.0, 0.3, 16.6 · pos -37.5, 0.1, 77.3 · Plastic · #676668 · unanchored
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **Plot** `Part` — size 79.0, 1.0, 81.0 · pos -158.1, 0.5, -91.5 · Fabric · #1f2024
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **Part** `Part` — size 625.0, 1.0, 52.0 · pos -30.5, 0.5, -8.0 · Asphalt · #0d0d0d
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **Part** `Part` — size 563.0, 0.3, 167.4 · pos -37.5, 0.1, 169.3 · Plastic · #1c5931 · unanchored
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+- **plot** `Part` — size 79.0, 1.0, 81.0 · pos -251.5, 0.5, 126.5 · Fabric · #1f2024
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
+  - **TextMaterial** `Texture`
