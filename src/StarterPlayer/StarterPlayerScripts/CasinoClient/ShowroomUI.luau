@@ -29,7 +29,7 @@ local function refreshOne(display: Instance, cash: number)
 	local price = card and card:FindFirstChild("Price", true)
 	if not (price and price:IsA("TextLabel")) then return end
 	if cash >= cost then
-		price.TextColor3 = C.Accent
+		price.TextColor3 = C.Gold
 		price.Text = ("$%s   [E] Buy"):format(commas(cost))
 	else
 		price.TextColor3 = C.Red

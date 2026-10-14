@@ -57,17 +57,22 @@ local function findEntrancePos(inst: Instance, base: BasePart): Vector3
 	return top + base.CFrame.LookVector * (base.Size.Z/2 + 6)
 end
 
-local function findSignLabel(inst: Instance): TextLabel?
-	if inst:IsA("BasePart") then return nil end
-	local bb = inst:FindFirstChild("OwnerSign", true)
-	if bb and bb:IsA("BillboardGui") then
-		return bb:FindFirstChildWhichIsA("TextLabel")
+-- every BillboardGui/SurfaceGui named "OwnerSign" in the plot (the Strip's
+-- casino pylon has one on each face); writes go to its "OwnerText" label
+local function findSignLabels(inst: Instance): {TextLabel}
+	local out = {}
+	if inst:IsA("BasePart") then return out end
+	for _, d in inst:GetDescendants() do
+		if d.Name == "OwnerSign" and (d:IsA("BillboardGui") or d:IsA("SurfaceGui")) then
+			local label = d:FindFirstChild("OwnerText", true) or d:FindFirstChildWhichIsA("TextLabel", true)
+			if label and label:IsA("TextLabel") then table.insert(out, label) end
+		end
 	end
-	return nil
+	return out
 end
 
 local function setSign(rec, text: string)
-	if rec.signLabel then rec.signLabel.Text = text end
+	for _, label in rec.signLabels or {} do label.Text = text end
 end
 
 ------------------------------------------------------------------
@@ -108,8 +113,10 @@ local function buildTrim(rec)
 		table.insert(rec.trims, p)
 	end
 
-	-- corner spill so the rim actually lights the carpet after dark
+	-- corner spill so the rim actually lights the carpet after dark — only on
+	-- bare plots: the Strip map hangs its own floor lights over each casino
 	rec.trimLights = {}
+	if rec.model:FindFirstChild("Frontage") then return end
 	for _, cx in { -sx / 2 + 2, sx / 2 - 2 } do
 		for _, cz in { -sz / 2 + 2, sz / 2 - 2 } do
 			local a = Instance.new("Attachment")
@@ -168,14 +175,14 @@ local function buildRecord(inst: Instance)
 	local center = base.Position
 	local size = base.Size
 	local entrance = findEntrancePos(inst, base)
-	local signLabel = findSignLabel(inst)
+	local signLabels = findSignLabels(inst)
 	if inst:IsA("Model") and not inst.PrimaryPart then
 		inst.PrimaryPart = base
 	end
 	return {
 		model = inst, base = base, center = center, size = size,
 		surfaceY = center.Y + size.Y/2,
-		entrance = entrance, signLabel = signLabel,
+		entrance = entrance, signLabels = signLabels,
 		ownerId = nil, machines = {},
 	}
 end

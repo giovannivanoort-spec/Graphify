@@ -13,8 +13,12 @@ local MachineVisuals = require(script.Parent:WaitForChild("MachineVisuals"))
 local Gambling = {}
 local Economy, Staff, Data, Monetization
 
--- Drive a Lucky 7s machine's physical reels/LEDs from a spin result.
+-- Show a play on the physical machine. Every type bumps PlayTick/LastWin so the
+-- clients animate it locally (MachineFX: wheels spin, dice roll, bulbs flash);
+-- slot reels/LEDs are additionally driven from here (MachineVisuals).
 local function showSlotOutcome(machine, gameType, result)
+	machine:SetAttribute("LastWin", result.won == true)
+	machine:SetAttribute("PlayTick", (machine:GetAttribute("PlayTick") or 0) + 1)
 	if gameType ~= "Slots" then return end
 	local reels = result.detail and result.detail.reels
 	MachineVisuals.showOutcome(machine, reels, result.won == true)

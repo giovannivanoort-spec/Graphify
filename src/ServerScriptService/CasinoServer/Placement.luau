@@ -37,9 +37,11 @@ local function buildMachine(def, ownerId: number, groundCF: CFrame, placedId: st
 	if custom then
 		model = custom
 		model.Name = def.name
-		local primary, size = MachineVisuals.seat(model, groundCF)
+		local primary, _ = MachineVisuals.seat(model, groundCF)
 		body = primary
-		topOffset = size.Y / 2 + 1.5
+		-- float the name tag just above the model's top, wherever the body sits
+		local bbCF, bbSize = model:GetBoundingBox()
+		topOffset = (bbCF.Position.Y + bbSize.Y / 2) - body.Position.Y + 1.2
 		MachineVisuals.initDisplay(model)       -- reels/LEDs idle state
 	else
 		model = Instance.new("Model")
@@ -75,13 +77,17 @@ local function buildMachine(def, ownerId: number, groundCF: CFrame, placedId: st
 	glow.Shadows = false
 	glow.Parent = body
 
+	-- name tag in the UI's display style (Luckiest Guy + ink outline)
 	local bb = Instance.new("BillboardGui")
-	bb.Size = UDim2.fromScale(7, 2); bb.StudsOffset = Vector3.new(0, topOffset, 0)
-	bb.AlwaysOnTop = true; bb.Parent = body
+	bb.Name = "NameTag"
+	bb.Size = UDim2.fromScale(7, 1.4); bb.StudsOffset = Vector3.new(0, topOffset, 0)
+	bb.AlwaysOnTop = true; bb.MaxDistance = 90; bb.LightInfluence = 0; bb.Parent = body
 	local lbl = Instance.new("TextLabel")
 	lbl.Size = UDim2.fromScale(1, 1); lbl.BackgroundTransparency = 1
-	lbl.TextScaled = true; lbl.Font = Enum.Font.GothamBold
-	lbl.TextColor3 = Color3.fromRGB(255, 255, 255); lbl.Text = def.name; lbl.Parent = bb
+	lbl.TextScaled = true; lbl.Font = Enum.Font.LuckiestGuy
+	lbl.TextColor3 = Color3.fromRGB(255, 243, 168); lbl.Text = string.upper(def.name); lbl.Parent = bb
+	local lblStroke = Instance.new("UIStroke")
+	lblStroke.Color = Color3.fromRGB(43, 10, 18); lblStroke.Thickness = 3; lblStroke.Parent = lbl
 
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ActionText = isConc and "Buy" or "Play"; prompt.ObjectText = def.name
@@ -181,8 +187,12 @@ function Placement.move(player: Player, machine: Instance, posX: number, posZ: n
 	local body = machine.PrimaryPart or machine:FindFirstChild("Body")
 	if not (body and body:IsA("BasePart")) then return { ok = false, message = "Broken machine." } end
 	local groundCF = CFrame.new(pos) * CFrame.Angles(0, math.rad(rotationY or 0), 0)
-	local sizeY = body.Size.Y
-	machine:PivotTo(groundCF * CFrame.new(0, sizeY/2, 0))
+	if machine:GetAttribute("GroundPivot") then
+		machine:PivotTo(groundCF)                    -- pivot = footprint centre on the ground
+	else
+		local sizeY = body.Size.Y
+		machine:PivotTo(groundCF * CFrame.new(0, sizeY/2, 0))
+	end
 
 	-- persist new relative CFrame
 	local profile = Data.get(player)

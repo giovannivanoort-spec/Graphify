@@ -1,24 +1,22 @@
 --!nonstrict
--- SlotsUI.luau — a dynamic slot machine interface with spinning reels.
--- The server decides the outcome; this only animates to that result.
--- Presentation rides on UILib's luxury-casino language (gold-framed panel,
--- backdrop blur, FredokaOne counters); the spin flow itself is unchanged.
+-- SlotsUI.luau — slot machine panel in the Showtime style: crimson reel window
+-- with three cream reels, bet stepper, big SPIN button. The server decides the
+-- outcome (PlayGame); this only animates the reels to that result.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Common = ReplicatedStorage:WaitForChild("CasinoCommon")
 local Remotes = require(Common:WaitForChild("Remotes"))
-
 local UILib = require(script.Parent:WaitForChild("UILib"))
 local C = UILib.Colors
+local F = UILib.Fonts
 
 local SlotsUI = {}
 
--- reel symbols: fruit/bell are Creator Store images, BAR and 7 read better as
--- big FredokaOne type (real slot cabinets mix pictures and type the same way)
+-- reel symbols: fruit/bell are images, BAR and 7 read better as big type
 local SYMBOLS = {
-	Cherry = { image = UILib.Icons.Cherry },
-	Lemon  = { image = UILib.Icons.Lemon },
-	Bell   = { image = UILib.Icons.Bell },
+	Cherry = { image = "rbxassetid://87158052124670" },
+	Lemon  = { image = "rbxassetid://18666183636" },
+	Bell   = { image = "rbxassetid://14895343020" },
 	Bar    = { text = "BAR" },
 	Seven  = { text = "7" },
 }
@@ -36,139 +34,128 @@ function SlotsUI.open(machine: Instance)
 
 	local minBet = machine:GetAttribute("MinBet") or 5
 	local maxBet = machine:GetAttribute("MaxBet") or 100
-	local name = machine.Name
 	local bet = minBet
 	local spinning = false
 	local cashValue = UILib.getCashValue()
 
-	-- cabinet — centeredPanel dedupes any prior "SlotsPanel" and wires its own
-	-- ✕ button to dismiss (blur release included)
-	local panel, _close, content = UILib.centeredPanel("SlotsPanel", 0.42, 0.72, 470, 570, name)
+	local p = UILib.panel({ name = "SlotsPanel", title = string.upper(machine.Name), icon = "slot", width = 680, height = 620 })
+	local content = p.content
+	p.onClose(function() open = false end)
 
-	-- balance (animated count-up, mirrors leaderstats)
-	UILib.make("TextLabel", {
-		Size = UDim2.fromOffset(92, 30), BackgroundTransparency = 1, Text = "BALANCE",
-		Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = C.Sub,
-		TextXAlignment = Enum.TextXAlignment.Left, Parent = content,
+	-- balance
+	local balRow = UILib.make("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 34), Parent = content })
+	UILib.list(balRow, "x", 10, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center)
+	UILib.body(balRow, { text = "BALANCE", font = F.Display, size = 20, autoX = true, frameSize = UDim2.fromScale(0, 1), order = 1 })
+	local balance = UILib.text(balRow, {
+		text = money(cashValue.Value), font = F.Number, size = 28, color = C.Gold, autoX = true,
+		frameSize = UDim2.fromScale(0, 1), order = 2, stroke = 3, shadow = 3,
 	})
-	local balanceValue = UILib.make("TextLabel", {
-		Size = UDim2.new(1, -96, 0, 30), Position = UDim2.fromOffset(96, 0),
-		BackgroundTransparency = 1, Font = Enum.Font.FredokaOne, TextSize = 22,
-		TextColor3 = C.GoldLight, TextXAlignment = Enum.TextXAlignment.Left, Parent = content,
-	})
-	UILib.make("UIStroke", { Color = C.Ink, Thickness = 2, LineJoinMode = Enum.LineJoinMode.Round, Parent = balanceValue })
-	UILib.countTo(balanceValue, cashValue.Value, money)
-	local cashConn = cashValue.Changed:Connect(function(v)
-		UILib.countTo(balanceValue, v, money)
-	end)
+	UILib.countTo(balance, cashValue.Value, money)
+	local cashConn = cashValue.Changed:Connect(function(v) UILib.countTo(balance, v, money) end)
+	p.onClose(function() cashConn:Disconnect() end)
 
-	-- reel window (card frame; its stroke doubles as the win-flash target)
-	local reelCard = UILib.card(content, {
-		name = "ReelWindow", size = UDim2.new(1, 0, 0, 150), accent = C.GoldDark,
+	-- reel window
+	local windowHolder = UILib.make("Frame", {
+		BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 42), Size = UDim2.new(1, 0, 0, 186), Parent = content,
 	})
-	reelCard.Position = UDim2.fromOffset(0, 38)
-	UILib.make("UIListLayout", {
-		FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 10),
-		HorizontalAlignment = Enum.HorizontalAlignment.Center,
-		VerticalAlignment = Enum.VerticalAlignment.Center, Parent = reelCard,
+	local winBurst = UILib.image(windowHolder, UILib.Tex.sunburst, {
+		size = UDim2.fromOffset(700, 700), anchor = Vector2.new(0.5, 0.5), position = UDim2.fromScale(0.5, 0.5),
+		color = C.GoldTop, transparency = 1,
 	})
-	-- each cell carries an ImageLabel AND a TextLabel; setSymbol shows whichever
-	-- representation the symbol uses and hides the other
+	UILib.spin(winBurst, 30)
+	local window = UILib.make("Frame", {
+		Name = "ReelWindow", BackgroundColor3 = C.White, AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(528, 182), Parent = windowHolder,
+	})
+	UILib.corner(window, 26)
+	UILib.gradient(window, C.Crimson, C.CrimsonDeep)
+	local windowStroke = UILib.stroke(window, C.Ink, 5, true)
+	UILib.list(window, "x", 12, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center)
+
 	local reels = {}
 	for i = 1, 3 do
 		local cell = UILib.make("Frame", {
-			Size = UDim2.fromOffset(110, 120), BackgroundColor3 = C.Dark, Parent = reelCard,
+			Name = "Reel" .. i, BackgroundColor3 = C.White, Size = UDim2.fromOffset(156, 150), LayoutOrder = i,
+			ClipsDescendants = true, Parent = window,
 		})
-		UILib.corner(cell, 10)
-		UILib.gradient(cell, C.Panel, C.Dark)
-		UILib.stroke(cell, C.Panel2, 2)
-		local img = UILib.make("ImageLabel", {
-			Size = UDim2.fromOffset(76, 76), Position = UDim2.new(0.5, -38, 0.5, -38),
-			BackgroundTransparency = 1, Image = "", Parent = cell,
-		})
-		local txt = UILib.make("TextLabel", {
-			Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false,
-			Text = "", Font = Enum.Font.FredokaOne, TextSize = 44, TextColor3 = C.GoldLight,
+		UILib.corner(cell, 18)
+		UILib.make("UIGradient", {
+			Rotation = 90,
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromHex("#D9C9A8")), ColorSequenceKeypoint.new(0.25, Color3.fromHex("#FFFDF5")),
+				ColorSequenceKeypoint.new(0.75, Color3.fromHex("#FFFDF5")), ColorSequenceKeypoint.new(1, Color3.fromHex("#D9C9A8")),
+			}),
 			Parent = cell,
 		})
-		UILib.make("UIStroke", { Color = C.Ink, Thickness = 3, LineJoinMode = Enum.LineJoinMode.Round, Parent = txt })
-		reels[i] = { image = img, text = txt }
+		UILib.stroke(cell, C.Ink, 4, true)
+		local mover = UILib.make("Frame", { BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = cell })
+		local pop = UILib.make("UIScale", { Parent = mover })
+		local img = UILib.image(mover, nil, {
+			size = UDim2.fromOffset(104, 104), anchor = Vector2.new(0.5, 0.5), position = UDim2.fromScale(0.5, 0.5),
+		})
+		local txt, txtHolder = UILib.text(mover, { text = "", size = 72, color = C.Crimson, stroke = 5, shadow = 5 })
+		reels[i] = { image = img, text = txt, textHolder = txtHolder, mover = mover, pop = pop }
 	end
-
-	local function setSymbol(reel, symName)
-		local spec = SYMBOLS[symName]
+	local function setSymbol(reel, name)
+		local spec = SYMBOLS[name]
 		if spec and spec.image then
 			reel.image.Image = spec.image
 			reel.image.Visible = true
-			reel.text.Visible = false
+			reel.textHolder.Visible = false
 		else
 			reel.text.Text = (spec and spec.text) or "?"
-			reel.text.Visible = true
+			reel.text.TextSize = (spec and spec.text == "7") and 96 or 64
+			reel.textHolder.Visible = true
 			reel.image.Visible = false
 		end
 	end
-	setSymbol(reels[1], "Cherry"); setSymbol(reels[2], "Bell"); setSymbol(reels[3], "Seven")
+	setSymbol(reels[1], "Seven"); setSymbol(reels[2], "Seven"); setSymbol(reels[3], "Seven")
 
 	-- result banner
-	local result = UILib.make("TextLabel", {
-		Size = UDim2.new(1, 0, 0, 36), Position = UDim2.fromOffset(0, 196),
-		BackgroundTransparency = 1, Text = "Place your bet and spin!",
-		Font = Enum.Font.GothamBold, TextSize = 20, TextColor3 = C.White, Parent = content,
+	local result = UILib.text(content, {
+		text = "PLACE YOUR BET!", size = 34, color = C.White, frameSize = UDim2.new(1, 0, 0, 48),
+		position = UDim2.fromOffset(0, 236), stroke = 4, shadow = 4,
 	})
+	local resultHolder = result.Parent
+	local resultPop = UILib.make("UIScale", { Parent = resultHolder })
 
-	-- bet controls (same stepper math/limits as before)
+	-- bet stepper
+	local betRow = UILib.make("Frame", {
+		BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 292), Size = UDim2.new(1, 0, 0, 62), Parent = content,
+	})
+	UILib.list(betRow, "x", 12, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center)
+	local step = math.max(5, math.floor(minBet))
+	local betValue
 	local function setBet(v)
 		bet = math.clamp(math.floor(v), minBet, maxBet)
+		UILib.countTo(betValue, bet, money)
 	end
-	local betRow = UILib.make("Frame", {
-		Size = UDim2.new(1, 0, 0, 56), Position = UDim2.fromOffset(0, 240),
-		BackgroundColor3 = C.Panel, Parent = content,
+	UILib.button({ parent = betRow, tone = "Red", text = "-", font = F.Heavy, textSize = 48, size = UDim2.fromOffset(72, 58),
+		order = 1, onClick = function() if not spinning then setBet(bet - step) end end })
+	local pill = UILib.make("Frame", {
+		BackgroundColor3 = C.Cream, Size = UDim2.fromOffset(220, 56), LayoutOrder = 2, Parent = betRow,
 	})
-	UILib.corner(betRow, 12)
-	UILib.gradient(betRow)
-	UILib.stroke(betRow, C.Panel2, 2)
-	local minus = UILib.button({
-		Size = UDim2.fromOffset(56, 40), Position = UDim2.fromOffset(8, 8),
-		BackgroundColor3 = C.Panel2, Text = "−", TextSize = 28, TextColor3 = C.White, Parent = betRow,
-	})
-	local betLabel = UILib.make("TextLabel", {
-		Size = UDim2.new(1, -272, 1, 0), Position = UDim2.fromOffset(72, 0),
-		BackgroundTransparency = 1, Font = Enum.Font.FredokaOne, TextSize = 22,
-		TextColor3 = C.Gold, Parent = betRow,
-	})
-	UILib.make("UIStroke", { Color = C.Ink, Thickness = 2, LineJoinMode = Enum.LineJoinMode.Round, Parent = betLabel })
-	local plus = UILib.button({
-		Size = UDim2.fromOffset(56, 40), Position = UDim2.new(1, -132, 0, 8),
-		BackgroundColor3 = C.Panel2, Text = "+", TextSize = 28, TextColor3 = C.White, Parent = betRow,
-	})
-	local maxBtn = UILib.button({
-		Size = UDim2.fromOffset(60, 40), Position = UDim2.new(1, -68, 0, 8),
-		BackgroundColor3 = C.Gold, Text = "MAX", TextSize = 14, TextColor3 = C.Ink, Parent = betRow,
-	})
-	local step = math.max(5, math.floor(minBet))
-	local function refreshBet()
-		UILib.countTo(betLabel, bet, function(n) return "Bet: " .. money(n) end)
-	end
-	refreshBet()
-	minus.MouseButton1Click:Connect(function() setBet(bet - step); refreshBet() end)
-	plus.MouseButton1Click:Connect(function() setBet(bet + step); refreshBet() end)
-	maxBtn.MouseButton1Click:Connect(function() setBet(maxBet); refreshBet() end)
+	UILib.corner(pill, 16)
+	UILib.stroke(pill, C.Ink, 3.5, true)
+	UILib.list(pill, "x", 10, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center)
+	UILib.body(pill, { text = "BET", font = F.Display, size = 20, autoX = true, frameSize = UDim2.fromScale(0, 1), order = 1 })
+	betValue = UILib.text(pill, { text = money(bet), font = F.Number, size = 30, color = C.Gold, autoX = true,
+		frameSize = UDim2.fromScale(0, 1), order = 2, stroke = 3, shadow = 3 })
+	UILib.button({ parent = betRow, tone = "Green", text = "+", font = F.Heavy, textSize = 36, size = UDim2.fromOffset(72, 58),
+		order = 3, onClick = function() if not spinning then setBet(bet + step) end end })
+	UILib.button({ parent = betRow, tone = "Gold", text = "MAX", textSize = 24, size = UDim2.fromOffset(110, 58),
+		order = 4, onClick = function() if not spinning then setBet(maxBet) end end })
+	setBet(bet)
 
-	-- paytable
-	UILib.make("TextLabel", {
-		Size = UDim2.new(1, 0, 0, 50), Position = UDim2.fromOffset(0, 304),
-		BackgroundTransparency = 1, TextWrapped = true,
-		Font = Enum.Font.Gotham, TextSize = 13, TextColor3 = C.Sub,
-		TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
-		Text = "Triple: 7 x40  •  BAR x18  •  Bell x10  •  Lemon x5  •  Cherry x3      Any two match: x0.85",
-		Parent = content,
+	UILib.body(content, {
+		text = "3x 7 = x40   3x BAR = x18   3x Bell = x10   3x Lemon = x5   3x Cherry = x3   any pair = x0.85",
+		size = 12, xAlign = Enum.TextXAlignment.Center, frameSize = UDim2.new(1, 0, 0, 20),
+		position = UDim2.fromOffset(0, 362), transparency = 0.25,
 	})
 
-	-- spin button (its Text/colour get flipped while a spin is in flight)
 	local spinBtn = UILib.button({
-		Size = UDim2.new(1, 0, 0, 60), Position = UDim2.new(0, 0, 1, -60),
-		BackgroundColor3 = C.Green, Text = "SPIN", TextSize = 26, TextColor3 = C.White,
-		Font = Enum.Font.FredokaOne, _radius = 12, Parent = content,
+		parent = content, tone = "Green", text = "SPIN!", textSize = 46,
+		size = UDim2.new(1, -40, 0, 84), anchor = Vector2.new(0.5, 1), position = UDim2.new(0.5, 0, 1, -2),
 	})
 
 	------------------------------------------------------------------
@@ -176,74 +163,68 @@ function SlotsUI.open(machine: Instance)
 	------------------------------------------------------------------
 	local function cycleReel(reel, finalName, duration)
 		local elapsed = 0
-		while elapsed < duration do
+		while elapsed < duration and p.alive do
 			setSymbol(reel, ALL[math.random(1, #ALL)])
+			reel.mover.Position = UDim2.fromOffset(0, -18)
+			UILib.tween(reel.mover, { Position = UDim2.fromOffset(0, 0) }, 0.05, Enum.EasingStyle.Linear)
 			task.wait(0.05)
 			elapsed += 0.05
 		end
 		setSymbol(reel, finalName)
+		reel.mover.Position = UDim2.fromOffset(0, 0)
+		reel.pop.Scale = 1.18
+		UILib.tween(reel.pop, { Scale = 1 }, 0.3, Enum.EasingStyle.Back)
 	end
 
-	local function doSpin()
+	local function showResult(text, color, big)
+		result.Text = text
+		result.TextColor3 = color
+		resultPop.Scale = big and 1.35 or 1.12
+		UILib.tween(resultPop, { Scale = 1 }, 0.35, Enum.EasingStyle.Back)
+	end
+
+	spinBtn.onClick(function()
 		if spinning then return end
 		local b = bet
 		spinning = true
-		spinBtn.Text = "SPINNING…"
-		spinBtn.BackgroundColor3 = C.Panel2
-		result.Text = ""
-		result.TextColor3 = C.White
+		spinBtn.setEnabled(false)
+		spinBtn.setText("SPINNING...")
+		showResult("GOOD LUCK!", C.White)
 
 		local res = Remotes.PlayGame():InvokeServer(machine, b, nil)
-
+		if not p.alive then return end
 		if not res or not res.ok then
-			result.Text = (res and res.message) or "Spin failed."
-			result.TextColor3 = C.Red
+			showResult(string.upper((res and res.message) or "SPIN FAILED"), C.CrimsonTop)
 			spinning = false
-			spinBtn.Text = "SPIN"
-			spinBtn.BackgroundColor3 = C.Green
+			spinBtn.setEnabled(true)
+			spinBtn.setText("SPIN!")
 			return
 		end
 
 		local final = (res.detail and res.detail.reels) or { "Cherry", "Cherry", "Cherry" }
-		task.spawn(function() cycleReel(reels[1], final[1], 0.9) end)
-		task.spawn(function() cycleReel(reels[2], final[2], 1.4) end)
-		task.spawn(function() cycleReel(reels[3], final[3], 1.9) end)
+		task.spawn(cycleReel, reels[1], final[1], 0.9)
+		task.spawn(cycleReel, reels[2], final[2], 1.35)
+		task.spawn(cycleReel, reels[3], final[3], 1.8)
 		task.wait(2.0)
+		if not p.alive then return end
 
 		if res.net > 0 then
-			result.Text = "WIN +" .. money(res.net)
-			result.TextColor3 = C.Green
-			-- gold flash on the reel-card frame
-			local stroke = reelCard:FindFirstChildWhichIsA("UIStroke")
-			if stroke then
-				stroke.Color = C.GoldLight
-				UILib.tween(stroke, { Color = C.GoldDark }, 0.6)
-			end
-			-- big wins (5x the stake or better) earn a toast too
-			if res.net >= b * 5 then
-				UILib.toast("BIG WIN +" .. money(res.net), C.Gold)
-			end
+			local big = res.net >= b * 5
+			showResult((big and "BIG WIN! +" or "WIN +") .. money(res.net), C.GreenTop, big)
+			windowStroke.Color = C.GoldTop
+			UILib.tween(windowStroke, { Color = C.Ink }, 0.8)
+			winBurst.ImageTransparency = 0.35
+			UILib.tween(winBurst, { ImageTransparency = 1 }, big and 2.2 or 1.2)
+			if big then UILib.toast("BIG WIN!", "unlock", "+" .. money(res.net)) end
 		elseif res.net == 0 then
-			result.Text = "Push — bet returned"
-			result.TextColor3 = C.White
+			showResult("PUSH - BET RETURNED", C.White)
 		else
-			result.Text = "No win — −" .. money(-res.net)
-			result.TextColor3 = C.Red
+			showResult("NO WIN  -" .. money(-res.net), C.CrimsonTop)
 		end
-
-		if res.balance then UILib.countTo(balanceValue, res.balance, money) end
+		if res.balance then UILib.countTo(balance, res.balance, money) end
 		spinning = false
-		spinBtn.Text = "SPIN"
-		spinBtn.BackgroundColor3 = C.Green
-	end
-
-	spinBtn.MouseButton1Click:Connect(doSpin)
-
-	-- teardown: the panel's ✕ already runs dismiss(); Destroying fires exactly
-	-- once for every close path (dismiss, re-open dedupe, external Destroy)
-	panel.Destroying:Connect(function()
-		open = false
-		cashConn:Disconnect()
+		spinBtn.setEnabled(true)
+		spinBtn.setText("SPIN!")
 	end)
 end
 

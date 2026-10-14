@@ -424,8 +424,10 @@ local function runPatron(npc, casino, spec)
 			local c = concessions[rng:NextInteger(1, #concessions)]
 			local cp = c.PrimaryPart
 			if cp then
-				walkTo(npc, cp.Position + cp.CFrame.LookVector * 6)
-				walkTo(npc, cp.Position + cp.CFrame.LookVector * 3)
+				-- code-built models say how far their front edge sits from the PrimaryPart
+				local reach = c:GetAttribute("ApproachDistance") or 3
+				walkTo(npc, cp.Position + cp.CFrame.LookVector * (reach + 3))
+				walkTo(npc, cp.Position + cp.CFrame.LookVector * reach)
 				local rp = npc.root.Position
 				npc.root.CFrame = CFrame.lookAt(rp, Vector3.new(cp.Position.X, rp.Y, cp.Position.Z))
 				local revenue = c:GetAttribute("RevenuePerVisit") or 0
@@ -458,9 +460,10 @@ local function runPatron(npc, casino, spec)
 			heldMachine = machine
 			-- approach the FRONT of the machine; first step to a side waypoint so
 			-- we don't try to walk straight through the body
-			local front = mp.Position + mp.CFrame.LookVector * 6
+			local reach = machine:GetAttribute("ApproachDistance") or 3
+			local front = mp.Position + mp.CFrame.LookVector * (reach + 3)
 			walkTo(npc, front)
-			walkTo(npc, mp.Position + mp.CFrame.LookVector * 3)
+			walkTo(npc, mp.Position + mp.CFrame.LookVector * reach)
 			if not machine.Parent then release(); continue end
 
 			-- face the machine (yaw only)

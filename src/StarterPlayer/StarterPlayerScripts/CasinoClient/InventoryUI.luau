@@ -1,74 +1,87 @@
 --!nonstrict
--- InventoryUI.luau — grid of owned (unplaced) machines. "Place" starts the
--- placement controller for that item.
+-- InventoryUI.luau — ITEMS panel: owned-but-unplaced machines grouped per type
+-- ("x2 owned"), filterable by tab. PLACE closes the panel and starts the ghost
+-- placement controller for one copy.
 
 local UILib = require(script.Parent:WaitForChild("UILib"))
 local PlacementController = require(script.Parent:WaitForChild("PlacementController"))
-local C = UILib.Colors
+local A = UILib.Assets
 
 local InventoryUI = {}
 
-function InventoryUI.open()
-	local panel = UILib.centeredPanel("InventoryPanel", 0.7, 0.78, 720, 560, "Inventory")
+function InventoryUI.open(openShop)
+	local p = UILib.panel({ name = "InventoryPanel", title = "ITEMS", icon = "items", width = 1000, height = 500 })
+	local content = p.content
+	local body = UILib.make("Frame", {
+		Name = "Body", BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 60),
+		Size = UDim2.new(1, 0, 1, -60), Parent = content,
+	})
 
-	local scroller = UILib.make("ScrollingFrame", {
-		Position = UDim2.fromOffset(16, 64), Size = UDim2.new(1, -32, 1, -80),
-		BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 6,
-		CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, Parent = panel })
-	UILib.make("UIGridLayout", {
-		CellSize = UDim2.fromOffset(150, 142), CellPadding = UDim2.fromOffset(12, 12),
-		HorizontalAlignment = Enum.HorizontalAlignment.Center,
-		SortOrder = Enum.SortOrder.LayoutOrder, Parent = scroller })
-
-	local empty = UILib.make("TextLabel", {
-		Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, Visible = false,
-		Font = Enum.Font.GothamMedium, TextSize = 16, TextColor3 = C.Sub,
-		Text = "No machines yet — buy some at the Machine Shop.", Parent = panel,
-		Position = UDim2.fromOffset(0, 120) })
-
+	local filter = "all"
 	local function render(state)
-		if not panel.Parent then return end
-		for _, ch in scroller:GetChildren() do
-			if ch:IsA("Frame") then ch:Destroy() end
+		if not p.alive then return end
+		for _, ch in body:GetChildren() do ch:Destroy() end
+		-- group copies by machineId, keep the first item to place
+		local groups, order = {}, {}
+		for _, item in (state.inventory or {}) do
+			local isConc = item.kind == "concession"
+			if filter == "all" or (filter == "machines" and not isConc) or (filter == "snacks" and isConc) then
+				local g = groups[item.machineId]
+				if not g then
+					g = { item = item, count = 0 }
+					groups[item.machineId] = g
+					table.insert(order, item.machineId)
+				end
+				g.count += 1
+			end
 		end
-		local inv = state.inventory or {}
-		empty.Visible = #inv == 0
-		for i, item in inv do
-			local cell = UILib.make("Frame", {
-				BackgroundColor3 = C.Panel, LayoutOrder = i, Parent = scroller })
-			UILib.corner(cell, 10); UILib.stroke(cell, C.Panel2, 1)
 
-			UILib.make("Frame", {
-				Size = UDim2.fromOffset(40, 40), Position = UDim2.fromOffset(10, 10),
-				BackgroundColor3 = Color3.new(item.r, item.g, item.b), Parent = cell,
-			}, { UILib.make("UICorner", { CornerRadius = UDim.new(0, 8) }) })
+		if #order == 0 then
+			local empty = UILib.make("Frame", { BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = body })
+			UILib.image(empty, "items", {
+				size = UDim2.fromOffset(150, 150), anchor = Vector2.new(0.5, 0), position = UDim2.new(0.5, 0, 0, 6),
+			})
+			UILib.text(empty, {
+				text = "NOTHING HERE YET!", size = 32, frameSize = UDim2.new(1, 0, 0, 40), position = UDim2.fromOffset(0, 160),
+				color = UILib.Colors.Crimson,
+			})
+			UILib.button({
+				parent = empty, tone = "Gold", text = "GO SHOPPING", icon = "shop", textSize = 24,
+				size = UDim2.fromOffset(260, 60), anchor = Vector2.new(0.5, 0), position = UDim2.new(0.5, 0, 0, 214),
+				onClick = function() p.close(); if openShop then openShop() end end,
+			})
+			return
+		end
 
-			UILib.make("TextLabel", {
-				Size = UDim2.new(1, -60, 0, 40), Position = UDim2.fromOffset(56, 10),
-				BackgroundTransparency = 1, Font = Enum.Font.GothamBold, TextSize = 14,
-				TextColor3 = C.White, TextWrapped = true,
-				TextXAlignment = Enum.TextXAlignment.Left, Text = item.name, Parent = cell })
-			UILib.make("TextLabel", {
-				Size = UDim2.new(1, -20, 0, 18), Position = UDim2.fromOffset(10, 56),
-				BackgroundTransparency = 1, Font = Enum.Font.Gotham, TextSize = 12,
-				TextColor3 = C.Sub, TextXAlignment = Enum.TextXAlignment.Left,
-				Text = item.type, Parent = cell })
-
-			local place = UILib.button({
-				Size = UDim2.new(1, -20, 0, 34), Position = UDim2.new(0, 10, 1, -44),
-				BackgroundColor3 = C.Green, Text = "Place", TextSize = 15,
-				TextColor3 = C.White, Parent = cell })
-			place.MouseButton1Click:Connect(function()
-				panel:Destroy()
-				PlacementController.begin(item)
-			end)
+		local grid = UILib.scroller(body, { grid = true })
+		for i, machineId in order do
+			local g = groups[machineId]
+			local item = g.item
+			UILib.card({
+				parent = grid, order = i, tone = A.TypeTone[item.type] or "Blue", icon = A.TypeIcon[item.type] or "star",
+				title = string.upper(item.name), titleSize = #item.name > 13 and 18 or 22,
+				stat = ("x%d owned"):format(g.count),
+				badge = g.count > 1 and { text = "x" .. g.count, tone = "Gold" } or nil,
+				button = { tone = "Blue", text = "PLACE", onClick = function()
+					p.close()
+					PlacementController.begin(item)
+				end },
+			})
 		end
 	end
 
-	local disconnect = UILib.subscribe(render)
-	panel.AncestryChanged:Connect(function(_, parent)
-		if not parent then disconnect() end
-	end)
+	local tabs = UILib.tabs(content, {
+		{ id = "all", label = "ALL" },
+		{ id = "machines", label = "MACHINES" },
+		{ id = "snacks", label = "SNACKS & BAR" },
+	}, function(id)
+		filter = id
+		render(UILib.state)
+	end, "all")
+
+	local unsub = UILib.subscribe(render)
+	p.onClose(unsub)
+	return tabs
 end
 
 return InventoryUI

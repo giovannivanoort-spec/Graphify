@@ -1,5 +1,6 @@
 --!nonstrict
--- WelcomeUI.luau — "welcome back" popup showing offline income, with a Claim button.
+-- WelcomeUI.luau — WELCOME BACK popup with the offline income your machines
+-- earned (big cash render on a spinning sunburst) and a CLAIM button.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Common = ReplicatedStorage:WaitForChild("CasinoCommon")
@@ -9,36 +10,53 @@ local C = UILib.Colors
 
 local WelcomeUI = {}
 
-local function commas(n: number): string
-	local s = tostring(math.floor(n or 0))
-	local k
-	repeat s, k = s:gsub("^(-?%d+)(%d%d%d)", "%1,%2") until k == 0
-	return s
-end
-
 function WelcomeUI.show(info)
-	local panel = UILib.centeredPanel("WelcomePanel", 0.45, 0.42, 420, 320, "Welcome Back!")
-
-	UILib.make("TextLabel", { Size = UDim2.new(1, -32, 0, 30), Position = UDim2.fromOffset(16, 70),
-		BackgroundTransparency = 1, Font = Enum.Font.GothamMedium, TextSize = 15, TextColor3 = C.Sub,
-		Text = ("Your %d machine(s) earned while you were away:"):format(info.machines or 0),
-		TextWrapped = true, Parent = panel })
-
-	UILib.make("TextLabel", { Size = UDim2.new(1, -32, 0, 64), Position = UDim2.fromOffset(16, 108),
-		BackgroundTransparency = 1, Font = Enum.Font.GothamBold, TextSize = 40, TextColor3 = C.Accent,
-		Text = "$" .. commas(info.amount or 0), Parent = panel })
-
-	UILib.make("TextLabel", { Size = UDim2.new(1, -32, 0, 22), Position = UDim2.fromOffset(16, 176),
-		BackgroundTransparency = 1, Font = Enum.Font.Gotham, TextSize = 13, TextColor3 = C.Sub,
-		Text = ("(%.1f hours of offline income)"):format(info.hours or 0), Parent = panel })
-
-	local claim = UILib.button({ Size = UDim2.new(1, -32, 0, 48), Position = UDim2.new(0, 16, 1, -64),
-		BackgroundColor3 = C.Green, Text = "Claim", TextSize = 18, TextColor3 = C.White, Parent = panel })
-	claim.MouseButton1Click:Connect(function()
-		local res = Remotes.ClaimOffline():InvokeServer()
-		if res and res.ok then UILib.toast("Claimed $" .. commas(res.amount) .. "!", C.Green) end
-		panel:Destroy()
+	local p = UILib.panel({ name = "WelcomePanel", title = "WELCOME BACK!", icon = "star", width = 640, height = 470 })
+	local content = p.content
+	UILib.body(content, {
+		text = ("Your %d machine(s) kept earning while you were away (%.1f h):"):format(info.machines or 0, info.hours or 0),
+		size = 16, xAlign = Enum.TextXAlignment.Center, frameSize = UDim2.new(1, 0, 0, 24), wrap = true,
+	})
+	local stage = UILib.make("Frame", {
+		Name = "Stage", BackgroundTransparency = 1, ClipsDescendants = true,
+		Position = UDim2.fromOffset(0, 30), Size = UDim2.new(1, 0, 0, 170), Parent = content,
+	})
+	local burst = UILib.image(stage, UILib.Tex.sunburst, {
+		size = UDim2.fromOffset(420, 420), anchor = Vector2.new(0.5, 0.5), position = UDim2.fromScale(0.5, 0.5),
+		color = C.GoldTop, transparency = 0.6,
+	})
+	UILib.spin(burst, 12)
+	UILib.image(stage, UILib.Tex.glow, {
+		size = UDim2.fromOffset(260, 200), anchor = Vector2.new(0.5, 0.5), position = UDim2.fromScale(0.5, 0.5),
+		transparency = 0.2,
+	})
+	UILib.image(stage, "cash", {
+		size = UDim2.fromOffset(170, 170), anchor = Vector2.new(0.5, 0.5), position = UDim2.fromScale(0.5, 0.5),
+	})
+	local amount = UILib.text(content, {
+		text = "$0", font = UILib.Fonts.Number, size = 52, color = C.Green,
+		frameSize = UDim2.new(1, 0, 0, 60), position = UDim2.fromOffset(0, 200), stroke = 4, shadow = 4,
+	})
+	UILib.countTo(amount, 0, function(n) return "$" .. UILib.commas(n) end)
+	task.delay(0.25, function()
+		UILib.countTo(amount, info.amount or 0, function(n) return "$" .. UILib.commas(n) end)
 	end)
+	local claimed = false
+	local function claim()
+		if claimed then return end
+		claimed = true
+		local res = Remotes.ClaimOffline():InvokeServer()
+		if res and res.ok then
+			UILib.toast("CLAIMED " .. UILib.money(res.amount) .. "!", "income", "Your casino never sleeps.")
+		end
+	end
+	UILib.button({
+		parent = content, tone = "Gold", text = "CLAIM!", textSize = 36,
+		size = UDim2.fromOffset(300, 72), anchor = Vector2.new(0.5, 1), position = UDim2.new(0.5, 0, 1, -2),
+		onClick = function() claim(); p.close() end,
+	})
+	-- closing with X / Esc / backdrop still pays out — never lose offline income
+	p.onClose(claim)
 end
 
 function WelcomeUI.start()

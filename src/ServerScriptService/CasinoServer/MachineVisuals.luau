@@ -16,6 +16,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Common = ReplicatedStorage:WaitForChild("CasinoCommon")
 local Config = require(Common:WaitForChild("Config"))
+local MachineModels = require(script.Parent:WaitForChild("MachineModels"))
 
 local MachineVisuals = {}
 
@@ -99,6 +100,10 @@ end
 
 function MachineVisuals.cloneFor(def): Model?
 	if not def or not def.model then return nil end
+	-- code-built Showtime models (MachineModels) take precedence over templates
+	if MachineModels.has(def.model) then
+		return MachineModels.build(def)
+	end
 	local folder = ReplicatedStorage:FindFirstChild("Machines")
 	local template = folder and folder:FindFirstChild(def.model)
 	if not template then return nil end
@@ -111,6 +116,16 @@ function MachineVisuals.cloneFor(def): Model?
 end
 
 function MachineVisuals.seat(model: Model, groundCF: CFrame): (BasePart, Vector3)
+	-- code-built models carry their pivot at the centre of the footprint on the
+	-- ground, so they seat exactly on groundCF (no bounding-box guesswork)
+	if model:GetAttribute("GroundPivot") then
+		for _, d in model:GetDescendants() do
+			if d:IsA("BasePart") then d.Anchored = true end
+		end
+		model:PivotTo(groundCF)
+		local _, size = model:GetBoundingBox()
+		return model.PrimaryPart, size
+	end
 	if not model.PrimaryPart then
 		local biggest, biggestVol = nil, -1
 		for _, d in model:GetDescendants() do

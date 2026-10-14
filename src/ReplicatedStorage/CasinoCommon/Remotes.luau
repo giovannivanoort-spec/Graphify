@@ -49,6 +49,8 @@ function Remotes.UpgradeMachine(): RemoteFunction return ensure("RemoteFunction"
 function Remotes.PlayGame(): RemoteFunction return ensure("RemoteFunction", "PlayGame") :: RemoteFunction end
 function Remotes.ClaimOffline(): RemoteFunction return ensure("RemoteFunction", "ClaimOffline") :: RemoteFunction end
 function Remotes.GetMonetization(): RemoteFunction return ensure("RemoteFunction", "GetMonetization") :: RemoteFunction end
+function Remotes.ClaimDaily(): RemoteFunction return ensure("RemoteFunction", "ClaimDaily") :: RemoteFunction end
+function Remotes.BuyTicketItem(): RemoteFunction return ensure("RemoteFunction", "BuyTicketItem") :: RemoteFunction end
 
 -- RemoteEvents (server -> client pushes) -------------------------
 function Remotes.DataUpdated(): RemoteEvent return ensure("RemoteEvent", "DataUpdated") :: RemoteEvent end
@@ -62,7 +64,7 @@ if RunService:IsServer() then
 	Remotes.GetCatalog(); Remotes.GetData(); Remotes.BuyToInventory(); Remotes.PlaceFromInventory()
 	Remotes.PickupMachine(); Remotes.MoveMachine(); Remotes.SellMachine(); Remotes.HireStaff()
 	Remotes.BuyUpgrade(); Remotes.UpgradeMachine(); Remotes.PlayGame(); Remotes.ClaimOffline()
-	Remotes.GetMonetization()
+	Remotes.GetMonetization(); Remotes.ClaimDaily(); Remotes.BuyTicketItem()
 	Remotes.DataUpdated(); Remotes.WelcomeBack()
 end
 

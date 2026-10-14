@@ -78,8 +78,15 @@ local function effectSum(player: Player, effectKey: string): number
 	return total
 end
 
+-- Optional hook (set by the server boot): extra multiplier from the Ticket Shop boost.
+Monetization.boostMultiplier = nil :: ((Player) -> number)?
+
 function Monetization.getEarningsMultiplier(player: Player): number
-	return effectProduct(player, "earningsMult")
+	local mult = effectProduct(player, "earningsMult")
+	if Monetization.boostMultiplier then
+		mult *= Monetization.boostMultiplier(player)
+	end
+	return mult
 end
 function Monetization.getOfflineMultiplier(player: Player): number
 	return effectProduct(player, "offlineMult")

@@ -21,6 +21,8 @@ local Gambling = require(script:WaitForChild("Gambling"))
 local Upgrades = require(script:WaitForChild("Upgrades"))
 local Monetization = require(script:WaitForChild("Monetization"))
 local NPCs = require(script:WaitForChild("NPCs"))
+local Rewards = require(script:WaitForChild("Rewards"))
+local Leaderboards = require(script:WaitForChild("Leaderboards"))
 
 ------------------------------------------------------------------
 -- collision groups (NPCs don't shove players or each other)
@@ -56,6 +58,9 @@ Placement.start({ Economy = Economy, Plots = Plots, Inventory = Inventory, Data 
 Showroom.start()
 Gambling.start({ Economy = Economy, Staff = Staff, Data = Data, Monetization = Monetization })
 NPCs.start({ Gambling = Gambling, Plots = Plots, Upgrades = Upgrades, Data = Data, Economy = Economy })
+Rewards.start({ Economy = Economy, Data = Data })
+Monetization.boostMultiplier = Rewards.boostMultiplier   -- Ticket Shop 2X boost stacks with passes
+Leaderboards.start({ Data = Data })                       -- the plaza's TOP CASINOS board
 
 ------------------------------------------------------------------
 -- snapshot the client UI reads
@@ -86,7 +91,9 @@ local function buildSnapshot(player: Player)
 	local upgrades = {}
 	for _, id in (p.Upgrades or {}) do table.insert(upgrades, id) end
 	return { cash = p.Cash, inventory = inv, placed = placed, staff = staff, upgrades = upgrades, stats = p.Stats,
-		vip = Monetization.hasVipBadge(player), maxMachines = Monetization.getMaxMachines(player) }
+		vip = Monetization.hasVipBadge(player), maxMachines = Monetization.getMaxMachines(player),
+		tickets = p.Tickets or 0, daily = Rewards.dailyState(player),
+		boostSeconds = Rewards.boostSecondsLeft(player), boostMult = Config.BoostMultiplier }
 end
 
 local function pushData(player: Player)
@@ -246,6 +253,18 @@ end
 
 Remotes.PlayGame().OnServerInvoke = function(player, machine, bet, choice)
 	return Gambling.play(player, machine, bet, choice)
+end
+
+Remotes.ClaimDaily().OnServerInvoke = function(player)
+	local res = Rewards.claimDaily(player)
+	if res.ok then pushData(player) end
+	return res
+end
+
+Remotes.BuyTicketItem().OnServerInvoke = function(player, itemId)
+	local res = Rewards.buyTicketItem(player, itemId)
+	if res.ok then pushData(player) end
+	return res
 end
 
 Remotes.ClaimOffline().OnServerInvoke = function(player)

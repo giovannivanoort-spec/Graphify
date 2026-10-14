@@ -1,16 +1,18 @@
 --!nonstrict
--- RobuxShopUI.luau — the Robux shop: gamepasses (permanent perks) + cash packs
--- (developer products). Live Robux prices/icons come from MarketplaceService;
--- ownership comes from the server (GetMonetization). Items whose Config id is
--- still 0 render as "Coming soon" and never prompt a purchase.
+-- RobuxShopUI.luau — the STORE panel:
+--   GAME PASSES  permanent perks (MarketplaceService gamepass prompts)
+--   CASH PACKS   developer products that grant Cash
+--   TICKET SHOP  spend Tickets on timed 2X boosts / a cash bundle (server: Rewards)
+-- Live Robux prices come from MarketplaceService; ids still at 0 in Config show
+-- as "SOON" and never prompt.
 
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Common = ReplicatedStorage:WaitForChild("CasinoCommon")
 local Remotes = require(Common:WaitForChild("Remotes"))
+local Config = require(Common:WaitForChild("Config"))
 local UILib = require(script.Parent:WaitForChild("UILib"))
-local C = UILib.Colors
 
 local RobuxShopUI = {}
 local player = Players.LocalPlayer
@@ -26,73 +28,109 @@ local function fetchPrice(id: number, infoType): number?
 	return price or nil
 end
 
-function RobuxShopUI.open()
+local PASS_LOOK = { vip = { "crown", "Purple" }, space = { "build", "Blue" }, offline2x = { "cash", "Green" } }
+local PACK_TONES = { "Green", "Blue", "Purple", "Orange" }
+
+function RobuxShopUI.open(tab: string?)
 	local data = Remotes.GetMonetization():InvokeServer()
-	if not data then UILib.toast("Shop unavailable.", C.Red); return end
+	if not data then UILib.toast("Store unavailable", "error"); return end
 
-	local _, _, content = UILib.centeredPanel("RobuxShop", 0.64, 0.85, 580, 640, "Robux Shop")
-	local list = UILib.make("ScrollingFrame", {
-		Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, CanvasSize = UDim2.new(),
-		AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 6, ScrollBarImageColor3 = C.Gold,
-		Parent = content })
-	UILib.make("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder, Parent = list })
-	UILib.pad(list, 4)
+	local p = UILib.panel({ name = "StorePanel", title = "STORE", icon = "gem", width = 1000, height = 548 })
+	local content = p.content
+	local body = UILib.make("Frame", {
+		Name = "Body", BackgroundTransparency = 1, Position = UDim2.fromOffset(0, 60),
+		Size = UDim2.new(1, 0, 1, -100), Parent = content,
+	})
+	local footer = UILib.body(content, {
+		text = "Perks apply instantly - no rejoin needed!", size = 14, transparency = 0.25,
+		anchor = Vector2.new(0, 1), position = UDim2.fromScale(0, 1), frameSize = UDim2.new(1, 0, 0, 30),
+	})
 
-	local function buildCard(item, isPass: boolean)
-		local accent = isPass and C.Premium or C.Cash
-		local card = UILib.card(list, { accent = accent, size = UDim2.new(1, 0, 0, 86) })
-
-		UILib.make("TextLabel", { Size = UDim2.new(1, -150, 0, 24), Position = UDim2.fromOffset(14, 10),
-			BackgroundTransparency = 1, Text = item.name, Font = Enum.Font.GothamBold, TextSize = 17,
-			TextColor3 = C.White, TextXAlignment = Enum.TextXAlignment.Left, Parent = card })
-
-		local desc = isPass and item.desc or ("Instantly adds $" .. UILib.commas(item.cashGrant or 0) .. " Cash to your bankroll.")
-		UILib.make("TextLabel", { Size = UDim2.new(1, -150, 0, 38), Position = UDim2.fromOffset(14, 36),
-			BackgroundTransparency = 1, Text = desc, Font = Enum.Font.Gotham, TextSize = 12.5,
-			TextColor3 = C.Sub, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
-			TextWrapped = true, Parent = card })
-
-		if item.badge then
-			local badge = UILib.badge(card, item.badge, C.Gold)
-			badge.AnchorPoint = Vector2.new(1, 0)
-			badge.Position = UDim2.new(1, -12, 0, 8)
-		end
-
-		local infoType = isPass and Enum.InfoType.GamePass or Enum.InfoType.Product
-		if isPass and item.owned then
-			local owned = UILib.badge(card, "✓ OWNED", C.Green)
-			owned.AnchorPoint = Vector2.new(1, 0.5)
-			owned.Position = UDim2.new(1, -14, 0.62, 0)
-			card.BackgroundTransparency = 0.4
-		else
-			local price = fetchPrice(item.id, infoType)
-			local txt = (item.id == 0 and "Coming soon") or (price and ("R$ " .. UILib.commas(price))) or "R$ —"
-			local buy = UILib.button({
-				Size = UDim2.fromOffset(120, 46), Position = UDim2.new(1, -14, 0.62, 0), AnchorPoint = Vector2.new(1, 0.5),
-				BackgroundColor3 = (item.id == 0) and C.Panel2 or C.Premium, Text = txt, TextSize = 15,
-				TextColor3 = C.White, Parent = card })
-			if item.id ~= 0 then
-				buy.MouseButton1Click:Connect(function()
-					if isPass then
-						MarketplaceService:PromptGamePassPurchase(player, item.id)
+	local current
+	local function robuxCard(grid, i, look, title, stat, id, infoType, owned, badge)
+		local card = UILib.card({
+			parent = grid, order = i, tone = look[2], icon = look[1], title = title, stat = stat,
+			titleSize = #title > 13 and 18 or 22,
+			badge = owned and { text = "OWNED", tone = "Green" } or badge,
+			button = owned and { tone = "Purple", text = "OWNED" } or {
+				tone = id == 0 and "Purple" or "Green", text = id == 0 and "SOON" or "R$ ...",
+				onClick = function()
+					if id == 0 then UILib.toast("Coming soon!", "info"); return end
+					if infoType == Enum.InfoType.GamePass then
+						MarketplaceService:PromptGamePassPurchase(player, id)
 					else
-						MarketplaceService:PromptProductPurchase(player, item.id)
+						MarketplaceService:PromptProductPurchase(player, id)
 					end
-				end)
+				end,
+			},
+		})
+		if not owned and id ~= 0 then
+			task.spawn(function()
+				local price = fetchPrice(id, infoType)
+				if card.button and card.Instance.Parent then
+					card.button.setText(price and ("R$ " .. UILib.commas(price)) or "R$ -")
+				end
+			end)
+		end
+	end
+
+	local function render(which)
+		current = which
+		for _, ch in body:GetChildren() do ch:Destroy() end
+		local grid = UILib.scroller(body, { grid = true })
+		if which == "passes" then
+			footer.Text = "Perks apply instantly - no rejoin needed!"
+			for i, gp in (data.gamepasses or {}) do
+				-- Luckiest Guy has no proper "×" glyph: show 2X instead of 2×
+				local title = string.upper(gp.name):gsub("\u{00D7}", "X")
+				robuxCard(grid, i, PASS_LOOK[gp.key] or { "star", "Gold" }, title,
+					gp.key == "vip" and "2x earnings + badge" or (gp.key == "space" and "+8 machine slots" or "2x offline income"),
+					gp.id, Enum.InfoType.GamePass, gp.owned, gp.key == "vip" and { text = "BEST VALUE", tone = "Gold" } or nil)
+			end
+		elseif which == "cash" then
+			footer.Text = "Cash lands in your bankroll instantly."
+			for i, pr in (data.products or {}) do
+				robuxCard(grid, i, { "cash", PACK_TONES[(i - 1) % #PACK_TONES + 1] }, "$" .. UILib.abbreviate(pr.cashGrant or 0),
+					"Cash pack", pr.id, Enum.InfoType.Product, false,
+					pr.badge and { text = pr.badge, tone = "Gold" } or nil)
+			end
+		else -- tickets
+			footer.Text = "Earn Tickets from your Daily Reward streak."
+			local have = UILib.state.tickets or 0
+			for i, item in Config.TicketShop do
+				local card = UILib.card({
+					parent = grid, order = i, tone = item.tone or "Pink", icon = item.icon or "ticket",
+					title = string.upper(item.name), stat = item.desc, titleSize = 22,
+					badge = item.badge and { text = item.badge, tone = "Gold" } or nil,
+					button = { tone = have >= item.cost and "Pink" or "Red", text = UILib.commas(item.cost), icon = "ticket",
+						onClick = function()
+							local res = Remotes.BuyTicketItem():InvokeServer(item.id)
+							if res and res.ok then
+								UILib.toast(string.upper(item.name) .. "!", "ticket", res.message)
+							else
+								UILib.toast(res and res.message or "Purchase failed", "error")
+							end
+						end },
+				})
+				card.Instance:SetAttribute("Cost", item.cost)
 			end
 		end
 	end
 
-	UILib.sectionHeader(list, "GAMEPASSES — permanent perks")
-	for _, gp in (data.gamepasses or {}) do buildCard(gp, true) end
+	local tabs = UILib.tabs(content, {
+		{ id = "passes", label = "GAME PASSES" },
+		{ id = "cash", label = "CASH PACKS" },
+		{ id = "tickets", label = "TICKET SHOP" },
+	}, render)
+	tabs.select(tab or "passes")
 
-	UILib.sectionHeader(list, "CASH PACKS")
-	for _, p in (data.products or {}) do buildCard(p, false) end
-
-	-- footer hint while ids are placeholders
-	UILib.make("TextLabel", { Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1,
-		Text = "Perks apply instantly after purchase — no rejoin needed.", Font = Enum.Font.Gotham,
-		TextSize = 12, TextColor3 = C.Sub, Parent = list })
+	-- ticket balance changes -> refresh the ticket tab's affordability
+	local first = true
+	local unsub = UILib.subscribe(function()
+		if first then first = false; return end
+		if current == "tickets" and p.alive then render("tickets") end
+	end)
+	p.onClose(unsub)
 end
 
 return RobuxShopUI

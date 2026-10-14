@@ -22,6 +22,9 @@ local UpgradesUI = require(script:WaitForChild("UpgradesUI"))
 local PlacementController = require(script:WaitForChild("PlacementController"))
 local ShowroomUI = require(script:WaitForChild("ShowroomUI"))
 local RobuxShopUI = require(script:WaitForChild("RobuxShopUI"))
+local DailyUI = require(script:WaitForChild("DailyUI"))
+local MachineFX = require(script:WaitForChild("MachineFX"))
+local MapFX = require(script:WaitForChild("MapFX"))
 local Sprint = require(script:WaitForChild("Sprint"))
 
 local player = Players.LocalPlayer
@@ -31,18 +34,25 @@ Remotes.DataUpdated().OnClientEvent:Connect(function(snap)
 	UILib.setState(snap)
 end)
 
--- HUD + welcome popup
+-- HUD
 HudUI.build({
-	onShop = ShopUI.open,
-	onInventory = InventoryUI.open,
-	onMove = PlacementController.enterSelectMode,
+	onShop = function() ShopUI.open() end,
+	onInventory = function() InventoryUI.open(function() ShopUI.open() end) end,
+	onBuild = PlacementController.enterSelectMode,
 	onUpgrades = UpgradesUI.open,
-	onManage = ManageUI.openOverview,
+	onCasino = ManageUI.openOverview,
 	onStats = StatsUI.open,
-	onRobuxShop = RobuxShopUI.open,
+	onStore = function(tab)
+		-- the "+" on the Cash pill lands on cash packs, the Tickets "+" on the ticket shop
+		RobuxShopUI.open(tab == "cash" and "cash" or (tab == "tickets" and "tickets" or nil))
+	end,
+	onDaily = DailyUI.open,
 })
 WelcomeUI.start()
+DailyUI.start()
 ShowroomUI.start()
+MachineFX.start()
+MapFX.start()
 Sprint.start()
 
 -- initial snapshot (in case we connected after the server's first push)
@@ -110,23 +120,36 @@ ProximityPromptService.PromptTriggered:Connect(function(prompt, plr)
 	if display then
 		local machineId = display:GetAttribute("ShopMachineId")
 		local res = Remotes.BuyToInventory():InvokeServer(machineId)
-		UILib.toast(res and res.message or "Purchase failed.",
-			(res and res.ok) and UILib.Colors.Green or UILib.Colors.Red)
+		if res and res.ok then
+			UILib.toast("BOUGHT!", "unlock", res.message)
+		else
+			UILib.toast(res and res.message or "Purchase failed.", "error")
+		end
 		return
 	end
 
-	-- services desk: concessions & staff menu
+	-- services desk: concessions & staff
 	if part:HasTag("ServicesKiosk") then
-		ShopUI.open()
+		ShopUI.open("concessions")
+		return
+	end
+
+	-- Welcome Plaza kiosks
+	if part:HasTag("DailyKiosk") then
+		DailyUI.open()
+		return
+	end
+	if part:HasTag("StoreKiosk") then
+		RobuxShopUI.open()
 		return
 	end
 
 	local machine = resolveMachine(part)
 	if machine and machine:GetAttribute("GameType") then
 		if isMyMachine(machine) then
-			ManageUI.openForMachine(machine)        -- your own machine: pick up / sell / upgrade
+			ManageUI.openForMachine(machine)        -- your own machine: upgrade / move / store / sell
 		elseif machine:GetAttribute("Kind") == "concession" then
-			UILib.toast("Patrons love your " .. machine.Name .. "!", UILib.Colors.Accent)
+			UILib.toast("Patrons love your " .. machine.Name .. "!", "info")
 		elseif machine:GetAttribute("GameType") == "Slots" then
 			SlotsUI.open(machine)
 		else
@@ -135,4 +158,4 @@ ProximityPromptService.PromptTriggered:Connect(function(prompt, plr)
 	end
 end)
 
-print("[CasinoTycoon] Client ready — physical showroom + buy-on-E.")
+print("[CasinoTycoon] Client ready — Showtime UI.")

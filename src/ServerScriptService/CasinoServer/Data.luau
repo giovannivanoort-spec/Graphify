@@ -60,6 +60,9 @@ local function defaultProfile()
 		Receipts = {},   -- granted dev-product PurchaseIds (idempotency for ProcessReceipt)
 		Stats = { TotalEarned = 0, TotalPaidOut = 0, SpinsHosted = 0, BiggestWinPaid = 0 },
 		LastSeen = 0,
+		Tickets = 0,
+		Daily = { lastClaim = 0, streak = 0 },   -- os.time() of last claim, consecutive claims
+		BoostUntil = 0,                          -- os.time() until the ticket earnings boost runs
 	}
 end
 
@@ -72,6 +75,11 @@ local function migrate(p)
 	for k, v in d.Stats do
 		if p.Stats[k] == nil then p.Stats[k] = v end
 	end
+	if type(p.Daily) ~= "table" then p.Daily = d.Daily end
+	p.Daily.lastClaim = tonumber(p.Daily.lastClaim) or 0
+	p.Daily.streak = tonumber(p.Daily.streak) or 0
+	p.Tickets = tonumber(p.Tickets) or 0
+	p.BoostUntil = tonumber(p.BoostUntil) or 0
 	for _, entry in (p.Placed or {}) do
 		if type(entry.upgrades) ~= "table" then
 			entry.upgrades = { speed = 0, bets = 0, lucky = 0 }

@@ -1,17 +1,16 @@
 --!nonstrict
--- StatsUI.luau — earnings & casino performance, read from the synced state.
+-- StatsUI.luau — CASINO STATS: six stat tiles (tone + 3D icon + big number),
+-- refreshed every 2 s while open (stats change server-side as NPCs gamble).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Common = ReplicatedStorage:WaitForChild("CasinoCommon")
 local Remotes = require(Common:WaitForChild("Remotes"))
 local UILib = require(script.Parent:WaitForChild("UILib"))
 local C = UILib.Colors
+local F = UILib.Fonts
 
 local StatsUI = {}
 
--- Stats change server-side as NPCs gamble, but the server only pushes a fresh
--- snapshot on buy/place/etc. Pull a fresh one so the panel isn't showing stale
--- (often all-zero) numbers.
 local function refresh()
 	task.spawn(function()
 		local snap = Remotes.GetData():InvokeServer()
@@ -19,59 +18,67 @@ local function refresh()
 	end)
 end
 
-local function commas(n: number): string
-	local s = tostring(math.floor(n or 0))
-	local k
-	repeat s, k = s:gsub("^(-?%d+)(%d%d%d)", "%1,%2") until k == 0
-	return s
-end
+local TILES = {
+	{ key = "earned",  label = "HOUSE PROFIT",   icon = "cash",  tone = "Green",  color = C.Green },
+	{ key = "paid",    label = "PAID TO WINNERS", icon = "coin",  tone = "Red",    color = C.Crimson },
+	{ key = "spins",   label = "GAMES HOSTED",   icon = "slot",  tone = "Purple", color = C.Purple },
+	{ key = "biggest", label = "BIGGEST PAYOUT", icon = "crown", tone = "Gold",   color = C.GoldDeep },
+	{ key = "placed",  label = "MACHINES PLACED", icon = "build", tone = "Blue",   color = C.Blue },
+	{ key = "stored",  label = "IN YOUR ITEMS",  icon = "items", tone = "Orange", color = C.Orange },
+}
 
 function StatsUI.open()
-	local panel = UILib.centeredPanel("StatsPanel", 0.56, 0.6, 520, 460, "Casino Stats")
+	local p = UILib.panel({ name = "StatsPanel", title = "CASINO STATS", icon = "stats", width = 900, height = 470 })
+	local grid = UILib.make("Frame", { Name = "Grid", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Parent = p.content })
+	UILib.make("UIGridLayout", {
+		CellSize = UDim2.new(0.5, -8, 0, 104), CellPadding = UDim2.fromOffset(16, 14),
+		SortOrder = Enum.SortOrder.LayoutOrder, Parent = grid,
+	})
+	UILib.pad(grid, 4, 6, 4, 0)
 
-	local list = UILib.make("Frame", { Position = UDim2.fromOffset(16, 64),
-		Size = UDim2.new(1, -32, 1, -80), BackgroundTransparency = 1, Parent = panel })
-	UILib.make("UIListLayout", { Padding = UDim.new(0, 10),
-		SortOrder = Enum.SortOrder.LayoutOrder, Parent = list })
-
-	local function statRow(label, value, color, order)
-		local r = UILib.make("Frame", { BackgroundColor3 = C.Panel, LayoutOrder = order,
-			Size = UDim2.new(1, 0, 0, 52), Parent = list })
-		UILib.corner(r, 10)
-		UILib.make("TextLabel", { Size = UDim2.new(0.6, -16, 1, 0), Position = UDim2.fromOffset(14, 0),
-			BackgroundTransparency = 1, Font = Enum.Font.GothamMedium, TextSize = 15, TextColor3 = C.Sub,
-			TextXAlignment = Enum.TextXAlignment.Left, Text = label, Parent = r })
-		UILib.make("TextLabel", { Size = UDim2.new(0.4, -16, 1, 0), Position = UDim2.new(0.6, 0, 0, 0),
-			BackgroundTransparency = 1, Font = Enum.Font.GothamBold, TextSize = 18, TextColor3 = color or C.White,
-			TextXAlignment = Enum.TextXAlignment.Right, Text = value, Parent = r })
+	local values = {}
+	for i, t in TILES do
+		local tone = UILib.Tones[t.tone]
+		local tile = UILib.make("Frame", { Name = t.key, BackgroundColor3 = C.Cream, LayoutOrder = i, Parent = grid })
+		UILib.corner(tile, 20)
+		UILib.stroke(tile, C.Ink, 3.5, true)
+		local box = UILib.make("Frame", {
+			BackgroundColor3 = C.White, Position = UDim2.fromOffset(10, 10), Size = UDim2.fromOffset(84, 84), Parent = tile,
+		})
+		UILib.corner(box, 18)
+		UILib.gradient(box, tone.top, tone.base)
+		UILib.stroke(box, C.Ink, 3.5, true)
+		UILib.image(box, t.icon, { size = UDim2.fromScale(1.05, 1.05), anchor = Vector2.new(0.5, 0.5), position = UDim2.fromScale(0.5, 0.46) })
+		UILib.body(tile, {
+			text = t.label, font = F.Display, size = 18, frameSize = UDim2.new(1, -116, 0, 24),
+			position = UDim2.fromOffset(108, 16), transparency = 0.15,
+		})
+		values[t.key] = UILib.text(tile, {
+			text = "0", font = F.Number, size = 34, color = t.color, xAlign = Enum.TextXAlignment.Left,
+			frameSize = UDim2.new(1, -116, 0, 44), position = UDim2.fromOffset(108, 44), stroke = 3, shadow = 3,
+			strokeColor = C.Ink,
+		})
 	end
 
 	local function render(state)
-		if not panel.Parent then return end
-		for _, ch in list:GetChildren() do if not ch:IsA("UIListLayout") then ch:Destroy() end end
+		if not p.alive then return end
 		local s = state.stats or {}
-		statRow("Total earned (house profit)", "$" .. commas(s.TotalEarned), C.Green, 1)
-		statRow("Total paid to winners", "$" .. commas(s.TotalPaidOut), C.Red, 2)
-		statRow("Games hosted", commas(s.SpinsHosted), C.White, 3)
-		statRow("Biggest single payout", "$" .. commas(s.BiggestWinPaid), C.Accent, 4)
-		statRow("Machines placed", commas(#(state.placed or {})), C.Blue, 5)
-		statRow("In inventory", commas(#(state.inventory or {})), C.Blue, 6)
+		UILib.countTo(values.earned, s.TotalEarned or 0, UILib.money)
+		UILib.countTo(values.paid, s.TotalPaidOut or 0, UILib.money)
+		UILib.countTo(values.spins, s.SpinsHosted or 0, UILib.commas)
+		UILib.countTo(values.biggest, s.BiggestWinPaid or 0, UILib.money)
+		UILib.countTo(values.placed, #(state.placed or {}), UILib.commas)
+		UILib.countTo(values.stored, #(state.inventory or {}), UILib.commas)
 	end
+	local unsub = UILib.subscribe(render)
+	p.onClose(unsub)
 
-	local disconnect = UILib.subscribe(render)
-
-	-- pull fresh stats now, then keep refreshing while the panel is open
 	refresh()
-	local open = true
 	task.spawn(function()
-		while open and panel.Parent do
+		while p.alive do
 			task.wait(2)
-			if open and panel.Parent then refresh() end
+			if p.alive then refresh() end
 		end
-	end)
-
-	panel.AncestryChanged:Connect(function(_, parent)
-		if not parent then open = false; disconnect() end
 	end)
 end
 

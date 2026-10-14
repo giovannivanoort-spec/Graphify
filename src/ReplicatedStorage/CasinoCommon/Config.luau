@@ -9,8 +9,45 @@ local Config = {}
 Config.CurrencyName = "Cash"
 Config.StartingCash = 8000
 Config.DataStoreName = "CasinoTycoon_v3"   -- bump to wipe all saves
-Config.DataSchemaVersion = 3
+Config.DataSchemaVersion = 4               -- v4: Tickets, Daily streak, BoostUntil
 Config.AutosaveInterval = 120              -- seconds between background saves
+
+------------------------------------------------------------------
+-- TICKETS (second currency) + DAILY REWARD + TICKET SHOP
+------------------------------------------------------------------
+Config.TicketName = "Tickets"
+
+-- 7-day login streak; day 7 is the MEGA reward, then the cycle restarts.
+Config.DailyRewards = {
+	{ cash = 500 },
+	{ tickets = 25 },
+	{ cash = 2000 },
+	{ tickets = 60 },
+	{ cash = 8000 },
+	{ tickets = 120 },
+	{ cash = 25000, tickets = 250, mega = true },
+}
+Config.DailyCooldownHours = 20      -- next reward unlocks this long after the last claim
+Config.DailyStreakResetHours = 48   -- no claim within this window -> streak restarts at day 1
+
+-- Spend Tickets here (Store -> TICKET SHOP). boostMinutes stacks onto any
+-- running boost; while boosted, positive machine earnings are multiplied.
+Config.BoostMultiplier = 2
+Config.TicketShop = {
+	{ id = "boost_10", name = "2X Cash", desc = "2x earnings - 10 min", cost = 50,
+	  boostMinutes = 10, icon = "cash", tone = "Orange" },
+	{ id = "boost_30", name = "2X Cash", desc = "2x earnings - 30 min", cost = 120,
+	  boostMinutes = 30, icon = "cash", tone = "Purple", badge = "BEST VALUE" },
+	{ id = "cash_bundle", name = "Cash Bundle", desc = "Swap for $5,000", cost = 40,
+	  cashGrant = 5000, icon = "coin", tone = "Green" },
+}
+
+function Config.getTicketItem(id: string)
+	for _, def in Config.TicketShop do
+		if def.id == id then return def end
+	end
+	return nil
+end
 
 ------------------------------------------------------------------
 -- HOUSE / BANKROLL MODEL
@@ -113,23 +150,26 @@ export type MachineDef = {
 	size: Vector3, color: Color3,
 	kind: string?,                  -- "machine" (default) | "concession"
 	revenuePerVisit: number?,       -- concessions only: paid to owner each NPC visit
+	model: string?,                 -- code-built model name (MachineModels)
 }
 
 Config.SellRefund = 0.5  -- fraction of cost returned when selling a machine
 
 Config.Catalog = {
-	{ id = "slots_basic",   name = "Lucky 7s Slots",   type = "Slots",     cost = 2000, minBet = 5,  maxBet = 75,  size = Vector3.new(4,6,3),  color = Color3.fromRGB(231, 76, 60), model = "Lucky7" },
-	{ id = "slots_deluxe",  name = "Diamond Slots",     type = "Slots",     cost = 6000, minBet = 25, maxBet = 200, size = Vector3.new(4,6,3),  color = Color3.fromRGB(155, 89, 182) },
-	{ id = "roulette_std",  name = "Roulette Table",    type = "Roulette",  cost = 4000, minBet = 10, maxBet = 60,  size = Vector3.new(8,3,5),  color = Color3.fromRGB(39, 174, 96) },
-	{ id = "blackjack_std", name = "Blackjack Table",   type = "Blackjack", cost = 3500, minBet = 20, maxBet = 300, size = Vector3.new(8,3,5),  color = Color3.fromRGB(41, 128, 185) },
-	{ id = "dice_std",      name = "Dice Game",         type = "Dice",      cost = 2500, minBet = 10, maxBet = 150, size = Vector3.new(4,4,3),  color = Color3.fromRGB(230, 126, 34) },
-	{ id = "wheel_fortune", name = "Wheel of Fortune",  type = "Wheel",     cost = 3000, minBet = 15, maxBet = 80,  size = Vector3.new(5,7,3),  color = Color3.fromRGB(241, 196, 15) },
+	-- `model` names a code-built Showtime model (ServerScriptService/CasinoServer/MachineModels);
+	-- `size` is its footprint (ghost preview while placing + procedural fallback).
+	{ id = "slots_basic",   name = "Lucky 7s Slots",   type = "Slots",     cost = 2000, minBet = 5,  maxBet = 75,  size = Vector3.new(4.1,7.2,3.2), color = Color3.fromRGB(231, 76, 60),  model = "LuckySevens" },
+	{ id = "slots_deluxe",  name = "Diamond Slots",     type = "Slots",     cost = 6000, minBet = 25, maxBet = 200, size = Vector3.new(4.1,8.1,3.2), color = Color3.fromRGB(155, 89, 182), model = "DiamondSlots" },
+	{ id = "roulette_std",  name = "Roulette Table",    type = "Roulette",  cost = 4000, minBet = 10, maxBet = 60,  size = Vector3.new(8.9,4.4,5.0), color = Color3.fromRGB(39, 174, 96),  model = "Roulette" },
+	{ id = "blackjack_std", name = "Blackjack Table",   type = "Blackjack", cost = 3500, minBet = 20, maxBet = 300, size = Vector3.new(8.2,4.2,4.8), color = Color3.fromRGB(41, 128, 185), model = "Blackjack" },
+	{ id = "dice_std",      name = "Dice Game",         type = "Dice",      cost = 2500, minBet = 10, maxBet = 150, size = Vector3.new(3.9,5.6,3.0), color = Color3.fromRGB(230, 126, 34), model = "Dice" },
+	{ id = "wheel_fortune", name = "Wheel of Fortune",  type = "Wheel",     cost = 3000, minBet = 15, maxBet = 80,  size = Vector3.new(5.6,9.0,2.6), color = Color3.fromRGB(241, 196, 15), model = "FortuneWheel" },
 
 	-- CONCESSIONS — patrons buy snacks/drinks on visits; revenue flows to you.
-	{ id = "snack_stand",    name = "Snack Stand",     type = "Snacks",    cost = 1500, minBet = 0, maxBet = 0, size = Vector3.new(5,4,3), color = Color3.fromRGB(244, 162, 97),  kind = "concession", revenuePerVisit = 18 },
-	{ id = "drink_bar",      name = "Drink Bar",       type = "Drinks",    cost = 2500, minBet = 0, maxBet = 0, size = Vector3.new(6,4,3), color = Color3.fromRGB(45, 156, 219),  kind = "concession", revenuePerVisit = 28 },
-	{ id = "souvenir_shop",  name = "Souvenir Cart",   type = "Souvenirs", cost = 3500, minBet = 0, maxBet = 0, size = Vector3.new(5,4,3), color = Color3.fromRGB(231, 76, 60),   kind = "concession", revenuePerVisit = 42 },
-	{ id = "vending",        name = "Vending Machine", type = "Vending",   cost = 800,  minBet = 0, maxBet = 0, size = Vector3.new(3,5,2), color = Color3.fromRGB(155, 89, 182),  kind = "concession", revenuePerVisit = 9  },
+	{ id = "snack_stand",    name = "Snack Stand",     type = "Snacks",    cost = 1500, minBet = 0, maxBet = 0, size = Vector3.new(4.9,5.2,2.9), color = Color3.fromRGB(244, 162, 97),  kind = "concession", revenuePerVisit = 18, model = "SnackStand" },
+	{ id = "drink_bar",      name = "Soda Fountain",       type = "Drinks",    cost = 2500, minBet = 0, maxBet = 0, size = Vector3.new(5.9,4.6,3.0), color = Color3.fromRGB(45, 156, 219),  kind = "concession", revenuePerVisit = 28, model = "DrinkBar" },
+	{ id = "souvenir_shop",  name = "Souvenir Cart",   type = "Souvenirs", cost = 3500, minBet = 0, maxBet = 0, size = Vector3.new(4.3,5.5,2.6), color = Color3.fromRGB(231, 76, 60),   kind = "concession", revenuePerVisit = 42, model = "SouvenirCart" },
+	{ id = "vending",        name = "Vending Machine", type = "Vending",   cost = 800,  minBet = 0, maxBet = 0, size = Vector3.new(3.2,5.6,2.2), color = Color3.fromRGB(155, 89, 182),  kind = "concession", revenuePerVisit = 9,  model = "Vending" },
 } :: {MachineDef}
 
 function Config.getMachineDef(id: string): MachineDef?
@@ -150,21 +190,28 @@ end
 -- inventory (if you can afford it). Concessions & staff live at a Services desk.
 ------------------------------------------------------------------
 Config.Showroom = {
-	Center = Vector3.new(0, 0.5, 220),  -- placed clear of the plot pads
+	-- the building closing off the west end of the Strip (Workspace.Map was
+	-- laid out around it by ServerStorage.MapTools.MapBuilder)
+	Center = Vector3.new(-176, 0.5, 0),
+	Yaw = 90,                           -- entrance faces east, down the Strip
 	Spacing = 14,                       -- studs between pedestals
 	PedestalHeight = 2.4,
 	RevealDistance = 14,                -- E-prompt activation distance
 	CardDistance = 28,                  -- info-card render distance (shows up close)
+	-- the Services desk stands on the Welcome Plaza, facing its centre
+	ServicesCFrame = CFrame.new(204, 0.8, -56) * CFrame.Angles(0, math.pi, 0),
 }
 
 -- Reel symbol images for the physical Lucky 7s machine (Spinny1/2/3 decals).
 -- Add/replace IDs here; the display assigns them so matching result symbols get
 -- matching images. Needs at least 3 distinct images.
+-- (3D icon renders from UIAssets: coin, gem, star, crown, cash)
 Config.SlotReelImages = {
-	"rbxassetid://47671241",
-	"rbxassetid://47671036",
-	"rbxassetid://47671152",
-	"rbxassetid://47671141",
+	"rbxassetid://135758119078818",
+	"rbxassetid://79822299316617",
+	"rbxassetid://95996033511594",
+	"rbxassetid://78690067083331",
+	"rbxassetid://73844020332102",
 }
 
 ------------------------------------------------------------------

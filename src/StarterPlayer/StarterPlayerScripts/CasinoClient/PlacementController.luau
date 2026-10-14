@@ -114,7 +114,7 @@ local function confirm()
 		res = Remotes.MoveMachine():InvokeServer(active.machine, pos.X, pos.Z, active.rotationY)
 	end
 	if res and res.ok then
-		UILib.toast(res.message, C.Green)
+		UILib.toast(string.upper(res.message or "Placed!"), "income")
 		if active.mode == "move" and active.machine and active.machine.Parent then
 			-- restore visibility (server already moved it)
 			for _, d in active.machine:GetDescendants() do
@@ -124,7 +124,7 @@ local function confirm()
 		end
 		cleanup()
 	else
-		UILib.toast(res and res.message or "Can't place there.", C.Red)
+		UILib.toast(res and res.message or "Can't place there.", "error")
 	end
 end
 
@@ -132,25 +132,56 @@ function PlacementController.cancel()
 	cleanup()
 end
 
-local function buildBar(label: string)
+-- bottom-centre action bar: cream pill with glossy buttons + key hints
+local function actionBar(name: string)
+	local holder = UILib.make("Frame", {
+		Name = name, BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -16), Size = UDim2.fromOffset(620, 96), Parent = UILib.getScreen(),
+	})
+	UILib.autoScale(holder, { mult = UILib.IsTouch and 1.1 or 1 })
 	local bar = UILib.make("Frame", {
-		Name = "PlaceBar", AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -18), Size = UDim2.fromOffset(360, 56),
-		BackgroundColor3 = C.Panel, Parent = UILib.getScreen() })
-	UILib.corner(bar, 12); UILib.stroke(bar, C.Accent, 2)
-	UILib.make("UIListLayout", {
-		FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8),
-		HorizontalAlignment = Enum.HorizontalAlignment.Center,
-		VerticalAlignment = Enum.VerticalAlignment.Center, Parent = bar })
-	local function mk(text, color, cb)
-		local b = UILib.button({ Size = UDim2.fromOffset(104, 40), BackgroundColor3 = color,
-			Text = text, TextSize = 15, TextColor3 = C.White, Parent = bar })
-		b.MouseButton1Click:Connect(cb)
+		Name = "Bar", BackgroundColor3 = C.Cream, AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.fromScale(0.5, 1), Size = UDim2.fromOffset(0, 84), AutomaticSize = Enum.AutomaticSize.X,
+		Parent = holder,
+	})
+	UILib.corner(bar, 26)
+	UILib.stroke(bar, C.Ink, 4, true)
+	UILib.pad(bar, 14, 0, 14, 0)
+	UILib.list(bar, "x", 10, nil, Enum.VerticalAlignment.Center)
+	-- the bar takes the income ticker's spot while it's up
+	local screen = UILib.getScreen()
+	local ticker = screen:FindFirstChild("HudBottom")
+	if ticker then ticker.Visible = false end
+	holder.Destroying:Connect(function()
+		-- Destroying fires while `holder` is still parented: ignore it when
+		-- checking whether another action bar is still up
+		for _, n in { "PlaceBar", "MoveSelectBanner" } do
+			for _, other in screen:GetChildren() do
+				if other.Name == n and other ~= holder then return end
+			end
+		end
+		local t = screen:FindFirstChild("HudBottom")
+		if t then t.Visible = true end
+	end)
+	return holder, bar
+end
+
+local function buildBar(label: string)
+	local holder, bar = actionBar("PlaceBar")
+	local function mk(text, tone, icon, hint, cb, order)
+		UILib.button({ parent = bar, tone = tone, text = text, icon = icon, textSize = 22, iconSize = 30,
+			size = UDim2.fromOffset(160, 60), order = order, onClick = cb })
+		if hint then
+			UILib.body(bar, { text = hint, size = 12, autoX = true, frameSize = UDim2.fromOffset(0, 60),
+				order = order + 1, transparency = 0.3 })
+		end
 	end
-	mk(label, C.Green, confirm)
-	mk("Rotate", C.Blue, function() if active then active.rotationY = (active.rotationY + 45) % 360 end end)
-	mk("Cancel", C.Red, PlacementController.cancel)
-	return bar
+	local touch = UILib.IsTouch
+	mk(string.upper(label), "Green", "build", (not touch) and "CLICK" or nil, confirm, 1)
+	mk("ROTATE", "Blue", nil, (not touch) and "R" or nil,
+		function() if active then active.rotationY = (active.rotationY + 45) % 360 end end, 3)
+	mk("CANCEL", "Red", nil, (not touch) and "ESC" or nil, PlacementController.cancel, 5)
+	return holder
 end
 
 local function startSession(opts)
@@ -243,20 +274,14 @@ function PlacementController.enterSelectMode()
 	endSelect()
 	cleanup()
 
-	local banner = UILib.make("Frame", {
-		Name = "MoveSelectBanner", AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -18), Size = UDim2.fromOffset(420, 56),
-		BackgroundColor3 = C.Panel, Parent = UILib.getScreen() })
-	UILib.corner(banner, 12); UILib.stroke(banner, C.Accent, 2)
-	UILib.make("TextLabel", {
-		Size = UDim2.new(1, -120, 1, 0), Position = UDim2.fromOffset(12, 0),
-		BackgroundTransparency = 1, Font = Enum.Font.GothamBold, TextSize = 15,
-		TextColor3 = C.White, TextXAlignment = Enum.TextXAlignment.Left,
-		Text = "Click a machine to move (Esc to cancel)", Parent = banner })
-	local cancel = UILib.button({ Size = UDim2.fromOffset(96, 36),
-		Position = UDim2.new(1, -108, 0.5, -18), BackgroundColor3 = C.Red,
-		Text = "Cancel", TextSize = 14, TextColor3 = C.White, Parent = banner })
-	cancel.MouseButton1Click:Connect(endSelect)
+	local banner, bar = actionBar("MoveSelectBanner")
+	UILib.image(bar, "build", { size = UDim2.fromOffset(56, 56), order = 1 })
+	UILib.body(bar, {
+		text = UILib.IsTouch and "TAP ONE OF YOUR MACHINES TO MOVE IT" or "CLICK ONE OF YOUR MACHINES TO MOVE IT",
+		font = UILib.Fonts.Display, size = 20, autoX = true, frameSize = UDim2.fromOffset(0, 60), order = 2,
+	})
+	UILib.button({ parent = bar, tone = "Red", text = "CANCEL", textSize = 22, size = UDim2.fromOffset(150, 60),
+		order = 3, onClick = endSelect })
 
 	selectActive = { banner = banner }
 	selectActive.inputConn = UserInputService.InputBegan:Connect(function(input, gp)
@@ -270,7 +295,7 @@ function PlacementController.enterSelectMode()
 			endSelect()
 			PlacementController.beginMove(m)
 		else
-			UILib.toast("That's not your machine.", C.Red)
+			UILib.toast("That's not your machine.", "error")
 		end
 	end)
 end

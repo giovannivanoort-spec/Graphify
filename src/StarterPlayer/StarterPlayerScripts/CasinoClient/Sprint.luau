@@ -22,19 +22,22 @@ function Sprint.start()
 	local cfg = Config.Sprint
 	if not cfg or not cfg.Enabled then return end
 
-	-- stamina bar (bottom-center, above the dock; pushed higher on touch)
+	-- stamina bar: bottom-centre, sitting just above the HUD income ticker (same
+	-- anchor + viewport scale as the ticker so the two never overlap)
 	local screen = UILib.getScreen()
+	local holder = UILib.make("Frame", {
+		Name = "StaminaHolder", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -12), Size = UDim2.fromOffset(300, 92), Parent = screen })
+	UILib.autoScale(holder, { mult = UILib.IsTouch and 1.12 or 1 })
 	local bar = UILib.make("Frame", {
-		Name = "StaminaBar", AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, UILib.IsTouch and -150 or -82),
-		Size = UDim2.fromOffset(228, 16), BackgroundColor3 = C.Panel, BackgroundTransparency = 0.1, Parent = screen })
-	UILib.corner(bar, 8)
-	UILib.stroke(bar, C.GoldDark, 2)
-	local fill = UILib.make("Frame", { Name = "Fill", Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.Gold, Parent = bar })
-	UILib.corner(fill, 8)
-	UILib.gradient(fill, UILib.lighten(C.Gold, 0.2), C.Gold)
-	local lbl = UILib.make("TextLabel", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Text = "SPRINT",
-		Font = Enum.Font.FredokaOne, TextSize = 11, TextColor3 = C.Ink, ZIndex = 2, Parent = bar })
+		Name = "StaminaBar", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.fromScale(0.5, 0),
+		Size = UDim2.fromOffset(240, 22), BackgroundColor3 = C.Ink, BackgroundTransparency = 0.25, Parent = holder })
+	UILib.corner(bar, 999)
+	local barStroke = UILib.stroke(bar, C.Ink, 3, true)
+	local fill = UILib.make("Frame", { Name = "Fill", Size = UDim2.fromScale(1, 1), BackgroundColor3 = C.White, Parent = bar })
+	UILib.corner(fill, 999)
+	UILib.gradient(fill, C.GoldTop, C.Gold)
+	local _, lbl = UILib.text(bar, { text = "SPRINT", size = 15, stroke = 2, shadow = 1 })
 
 	local stamina = cfg.MaxStamina
 	local sprinting = false
@@ -97,10 +100,12 @@ function Sprint.start()
 		-- bar
 		local pct = cfg.UseStamina and (stamina / cfg.MaxStamina) or 1
 		fill.Size = UDim2.fromScale(math.clamp(pct, 0, 1), 1)
-		fill.BackgroundColor3 = (pct < 0.2 and C.Red) or (pct < 0.4 and C.Orange) or C.Gold
+		-- tint multiplies the gold gradient: white = gold, warm red when nearly empty
+		fill.BackgroundColor3 = (pct < 0.2 and C.CrimsonTop) or (pct < 0.4 and C.OrangeTop) or C.White
 		local show = cfg.UseStamina and (running or pct < 0.999)
-		local targetT = show and 0.1 or 1
+		local targetT = show and 0.25 or 1
 		bar.BackgroundTransparency = bar.BackgroundTransparency + (targetT - bar.BackgroundTransparency) * math.min(1, dt * 6)
+		barStroke.Transparency = show and 0 or 1
 		fill.Visible = show
 		lbl.Visible = show
 	end)
