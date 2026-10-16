@@ -12,6 +12,11 @@
 --
 --   * OUTCOME-SCREEN rig (older Lucky7): three "result 1/2/3" parts with a Decal
 --     each = lose / win / jackpot screens. Kept as a fallback.
+--
+-- The code-built models (MachineModels) use the REEL rig; linked reel banks
+-- (SpinnyL1..3 / SpinnyR1..3 + LEDsL / LEDsR: the Diamond Dragon's side
+-- cabinets) roll and land with the main reels. Plinko machines get their
+-- ball's path from setPlinkoPath (the "LastPath" attribute MachineFX replays).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Common = ReplicatedStorage:WaitForChild("CasinoCommon")
@@ -57,6 +62,31 @@ end
 local function getLeds(model)
 	local l = model:FindFirstChild("LEDs", true)
 	return (l and l:IsA("BasePart")) and l or nil
+end
+
+-- extra reel banks that roll along with the main reels (the Diamond Dragon's
+-- side cabinets): SpinnyL1..3 / SpinnyR1..3, their LEDsL / LEDsR
+local EXTRA_BANKS = { "L", "R" }
+local function getExtraReels(model)
+	local sets = {}
+	for _, tag in EXTRA_BANKS do
+		local set = {}
+		for i = 1, 3 do
+			local reel = model:FindFirstChild("Spinny" .. tag .. i)
+			set[i] = reel and reel:FindFirstChildWhichIsA("Decal", true) or nil
+		end
+		if set[1] and set[2] and set[3] then table.insert(sets, set) end
+	end
+	return sets
+end
+
+local function getExtraLeds(model)
+	local out = {}
+	for _, tag in EXTRA_BANKS do
+		local l = model:FindFirstChild("LEDs" .. tag)
+		if l and l:IsA("BasePart") then table.insert(out, l) end
+	end
+	return out
 end
 
 ------------------------------------------------------------------
@@ -150,8 +180,12 @@ function MachineVisuals.initDisplay(model: Model)
 	local reels = getReelDecals(model)
 	if reels then
 		for i = 1, 3 do reels[i].Texture = IMAGES[((i - 1) % #IMAGES) + 1] end
+		for _, set in getExtraReels(model) do
+			for i = 1, 3 do set[i].Texture = IMAGES[((i - 1) % #IMAGES) + 1] end
+		end
 		local leds = getLeds(model)
 		if leds then leds.Color = IDLE_LED end
+		for _, l in getExtraLeds(model) do l.Color = IDLE_LED end
 		return
 	end
 	local outcome = getOutcomeDecals(model)
@@ -170,6 +204,15 @@ local function spinReels(model, decals, reels, won)
 	local snd = getSounds(model)
 	local leds = getLeds(model)
 	local finals = finalImages(reels)
+	-- linked banks (extra reel sets) roll with the main reels and land on the
+	-- same symbols; their LEDs flash along
+	local extra = getExtraReels(model)
+	local allLeds = getExtraLeds(model)
+	if leds then table.insert(allLeds, 1, leds) end
+	local function setReel(i: number, texture: string)
+		decals[i].Texture = texture
+		for _, set in extra do set[i].Texture = texture end
+	end
 
 	local t = (token[model] or 0) + 1
 	token[model] = t
@@ -180,40 +223,43 @@ local function spinReels(model, decals, reels, won)
 		-- all three reels roll
 		for _ = 1, 8 do
 			if not live() then return end
-			decals[1].Texture = randImg(); decals[2].Texture = randImg(); decals[3].Texture = randImg()
+			setReel(1, randImg()); setReel(2, randImg()); setReel(3, randImg())
 			task.wait(0.07)
 		end
 		-- stop reels left-to-right with a click each
-		decals[1].Texture = finals[1]; playSound(snd.stop)
+		setReel(1, finals[1]); playSound(snd.stop)
 		for _ = 1, 4 do
 			if not live() then return end
-			decals[2].Texture = randImg(); decals[3].Texture = randImg()
+			setReel(2, randImg()); setReel(3, randImg())
 			task.wait(0.07)
 		end
-		decals[2].Texture = finals[2]; playSound(snd.stop)
+		setReel(2, finals[2]); playSound(snd.stop)
 		for _ = 1, 4 do
 			if not live() then return end
-			decals[3].Texture = randImg()
+			setReel(3, randImg())
 			task.wait(0.07)
 		end
-		decals[3].Texture = finals[3]; playSound(snd.stop)
+		setReel(3, finals[3]); playSound(snd.stop)
 		if snd.spin then pcall(function() snd.spin:Stop() end) end
 
 		if not live() then return end
 		if won then
 			playSound(snd.win)
-			if leds then
+			if #allLeds > 0 then
+				local function paint(c: Color3)
+					for _, l in allLeds do l.Color = c end
+				end
 				for _ = 1, 6 do
 					if not live() then break end
-					leds.Color = Color3.new(1, 0.333333, 0); task.wait(0.1)
+					paint(Color3.new(1, 0.333333, 0)); task.wait(0.1)
 					if not live() then break end
-					leds.Color = Color3.new(1, 0, 0.498039); task.wait(0.1)
+					paint(Color3.new(1, 0, 0.498039)); task.wait(0.1)
 					if not live() then break end
-					leds.Color = Color3.new(0, 1, 0); task.wait(0.1)
+					paint(Color3.new(0, 1, 0)); task.wait(0.1)
 					if not live() then break end
-					leds.Color = IDLE_LED; task.wait(0.1)
+					paint(IDLE_LED); task.wait(0.1)
 				end
-				if model.Parent then leds.Color = IDLE_LED end
+				if model.Parent then paint(IDLE_LED) end
 			end
 		end
 	end)
@@ -238,6 +284,44 @@ local function flashOutcome(model, decals, reels, won)
 		if token[model] ~= t or not model.Parent then return end
 		for i = 1, 3 do if decals[i] then decals[i].Transparency = (i == idx) and 0 or 1 end end
 	end)
+end
+
+------------------------------------------------------------------
+-- Plinko: hand the ball's path to the clients (MachineFX drops the Ball
+-- along it). Call it BEFORE bumping PlayTick: it sets the "LastPath"
+-- attribute, 8 characters "0"/"1" (1 = right at that row, from the viewer;
+-- the ball lands in Pocket<1 + rights>). A win the patrons' tilt zeroed is
+-- shown landing in a losing bin, so the board agrees with LastWin.
+------------------------------------------------------------------
+local PLINKO_WIN_POCKET = { true, true, true, false, false, false, true, true, true }
+local pathRng = Random.new()
+
+local function pathTo(pocket: number): string
+	local bits = {}
+	for i = 1, 8 do bits[i] = (i <= pocket - 1) and "1" or "0" end
+	for i = 8, 2, -1 do
+		local j = pathRng:NextInteger(1, i)
+		bits[i], bits[j] = bits[j], bits[i]
+	end
+	return table.concat(bits)
+end
+
+function MachineVisuals.setPlinkoPath(model: Instance?, result)
+	if not model then return end
+	local detail = result and result.detail
+	local path = detail and detail.path
+	local s: string? = nil
+	if type(path) == "table" and #path == 8 then
+		local bits = {}
+		for i = 1, 8 do bits[i] = path[i] and "1" or "0" end
+		s = table.concat(bits)
+	end
+	local won = result ~= nil and result.won == true
+	local pocket = s and (select(2, (s :: string):gsub("1", "")) + 1) or nil
+	if not pocket or PLINKO_WIN_POCKET[pocket] ~= won then
+		s = pathTo(won and (pathRng:NextNumber() < 0.5 and 3 or 7) or pathRng:NextInteger(4, 6))
+	end
+	model:SetAttribute("LastPath", s)
 end
 
 -- Public: play the result on whatever rig the machine has.

@@ -1,11 +1,13 @@
 --!nonstrict
 -- GamesUI.luau — table games (roulette, dice, blackjack, wheel) in the Showtime
 -- style. One PlayGame invoke per round; the server decides the outcome.
+-- Plinko machines get their own board (PlinkoUI).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Common = ReplicatedStorage:WaitForChild("CasinoCommon")
 local Remotes = require(Common:WaitForChild("Remotes"))
 local UILib = require(script.Parent:WaitForChild("UILib"))
+local PlinkoUI = require(script.Parent:WaitForChild("PlinkoUI"))
 local C = UILib.Colors
 local F = UILib.Fonts
 local A = UILib.Assets
@@ -28,14 +30,21 @@ local function inputBox(parent, text, position, size)
 end
 
 function GamesUI.open(machine: Instance)
+	if machine:GetAttribute("GameType") == "Plinko" then
+		PlinkoUI.open(machine)
+		return
+	end
 	if open then return end
 	open = true
 	local gameType = machine:GetAttribute("GameType") or "Game"
 	local minBet = machine:GetAttribute("MinBet") or 1
 	local maxBet = machine:GetAttribute("MaxBet") or 100
+	-- the machine's own name when it fits the ribbon (BACCARAT TABLE, SIC BO
+	-- DOME), else its game (BILLIONAIRE ROULETTE -> ROULETTE)
+	local title = #machine.Name <= 15 and string.upper(machine.Name) or string.upper(gameType)
 
 	local p = UILib.panel({
-		name = "GamePanel", title = string.upper(gameType), icon = A.TypeIcon[gameType] or "star", width = 640, height = 560,
+		name = "GamePanel", title = title, icon = A.TypeIcon[gameType] or "star", width = 640, height = 560,
 	})
 	p.onClose(function() open = false end)
 	local content = p.content

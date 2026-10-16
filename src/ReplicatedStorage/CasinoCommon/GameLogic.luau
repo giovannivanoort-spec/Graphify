@@ -85,13 +85,15 @@ function GameLogic.dice(bet: number, choice: {target: number}): Result
 end
 
 ------------------------------------------------------------------
--- WHEEL OF FORTUNE (~92% RTP)
+-- WHEEL OF FORTUNE (92% RTP before the patrons' tilt; same seven segments,
+-- the wheel decal is unchanged). The old 30/25/22/12/7/3/1 table paid out
+-- 195% and lost the owner money on every spin.
 ------------------------------------------------------------------
 local WHEEL = {
-	{ mult = 0, weight = 30 }, { mult = 1, weight = 25 }, { mult = 2, weight = 22 },
-	{ mult = 3, weight = 12 }, { mult = 5, weight = 7 }, { mult = 10, weight = 3 },
-	{ mult = 25, weight = 1 },
-}
+	{ mult = 0, weight = 336 }, { mult = 1, weight = 60 }, { mult = 2, weight = 50 },
+	{ mult = 3, weight = 30 }, { mult = 5, weight = 15 }, { mult = 10, weight = 6 },
+	{ mult = 25, weight = 3 },
+} -- total 500: RTP 92%; at tilt 0.40 the owner keeps ~40% of every bet
 local WHEEL_TOTAL = 0
 for _, s in WHEEL do WHEEL_TOTAL += s.weight end
 function GameLogic.wheel(bet: number): Result
@@ -138,6 +140,31 @@ function GameLogic.blackjack(bet: number): Result
 end
 
 ------------------------------------------------------------------
+-- PLINKO (8 rows of pins, 9 pockets; 97.7% RTP before the tilt). The ball
+-- goes left or right at every row: pocket = 1 + rights, so the pocket odds
+-- are C(8, k) / 256. detail.path[row] = true when it went right (the
+-- viewer's right, facing the board); MachineFX / PlinkoUI replay it.
+-- The tilt only zeroes the 1.5x / 4x / 16x wins (payout > bet): the owner
+-- keeps ~30% at tilt 0.40.
+------------------------------------------------------------------
+local PLINKO_MULTS = { 16, 4, 1.5, 0.5, 0.2, 0.5, 1.5, 4, 16 }
+GameLogic.PlinkoMultipliers = PLINKO_MULTS
+GameLogic.PlinkoRows = 8
+
+function GameLogic.plinko(bet: number): Result
+	local pocket = 1
+	local path: {boolean} = {}
+	for row = 1, 8 do
+		local right = rng:NextInteger(0, 1) == 1
+		if right then pocket += 1 end
+		path[row] = right
+	end
+	local mult = PLINKO_MULTS[pocket]
+	local payout = math.floor(bet * mult)
+	return { won = payout > bet, payout = payout, detail = { pocket = pocket, path = path, multiplier = mult } }
+end
+
+------------------------------------------------------------------
 -- Max payout multiplier per game — used for the bankroll coverage check.
 ------------------------------------------------------------------
 function GameLogic.maxMultiplier(gameType: string): number
@@ -145,6 +172,7 @@ function GameLogic.maxMultiplier(gameType: string): number
 	elseif gameType == "Roulette" then return 36
 	elseif gameType == "Dice" then return 10
 	elseif gameType == "Wheel" then return 25
+	elseif gameType == "Plinko" then return 16
 	elseif gameType == "Blackjack" then return 3 end
 	return 36
 end
@@ -154,6 +182,7 @@ function GameLogic.resolve(gameType: string, bet: number, choice: any): Result
 	elseif gameType == "Roulette" then return GameLogic.roulette(bet, choice or {kind="color",value="red"})
 	elseif gameType == "Dice" then return GameLogic.dice(bet, choice or {target=50})
 	elseif gameType == "Wheel" then return GameLogic.wheel(bet)
+	elseif gameType == "Plinko" then return GameLogic.plinko(bet)
 	elseif gameType == "Blackjack" then return GameLogic.blackjack(bet) end
 	return { won = false, payout = 0, detail = { error = "unknown game" } }
 end

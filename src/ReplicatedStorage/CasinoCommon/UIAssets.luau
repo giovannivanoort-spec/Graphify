@@ -23,6 +23,43 @@ UIAssets.Icons = {
 	crown   = "rbxassetid://78690067083331",
 	lock    = "rbxassetid://122471467911892",
 	cash    = "rbxassetid://73844020332102",
+	-- Rebirth & Rewards update
+	rebirth      = "rbxassetid://97236128292430",
+	rcoin        = "rbxassetid://98443718704226",
+	xp           = "rbxassetid://131136212345098",
+	sparkles     = "rbxassetid://110559756009096",
+	potion_cash  = "rbxassetid://87833670132135",
+	potion_xp    = "rbxassetid://85131581427381",
+	potion_crowd = "rbxassetid://109752854875915",
+	potion_speed = "rbxassetid://78524713690393",
+	potion_lucky = "rbxassetid://73287358368118",
+	potion_mega  = "rbxassetid://74859145611622",
+	playtime     = "rbxassetid://106841850340843",
+	boost        = "rbxassetid://130994380682231",
+	plant        = "rbxassetid://97234239155855",
+	path         = "rbxassetid://104676577917903",
+	statue       = "rbxassetid://107315145139301",
+	lamp         = "rbxassetid://107821851315835",
+	shield       = "rbxassetid://115650552318770",
+	bowtie       = "rbxassetid://87884337029579",
+	broom        = "rbxassetid://127716170034078",
+	wrench       = "rbxassetid://84561751663494",
+	mic          = "rbxassetid://136151114896311",
+	clipboard    = "rbxassetid://135182167193379",
+	carkey       = "rbxassetid://119890497392881",
+	-- Cheaters & VIP update
+	quests    = "rbxassetid://71408868430793",
+	trophy    = "rbxassetid://73464735265077",
+	wheel     = "rbxassetid://87484377776838",
+	cheater   = "rbxassetid://97900226379256",
+	handcuffs = "rbxassetid://103982882402666",
+	vipfloor  = "rbxassetid://80882307076356",
+	megaphone = "rbxassetid://95858860075432",
+	stopwatch = "rbxassetid://98885171653146",
+	chance    = "rbxassetid://132294451435312",
+	chips     = "rbxassetid://122242368368967",
+	house     = "rbxassetid://102971132637195",
+	chest     = "rbxassetid://120346816712708",
 }
 
 UIAssets.Textures = {
@@ -56,18 +93,23 @@ UIAssets.Windows = {
 
 -- best-fit icon per catalog type until every machine has its own render
 UIAssets.TypeIcon = {
-	Slots = "slot", Roulette = "star", Blackjack = "crown", Dice = "ticket", Wheel = "star",
+	Slots = "slot", Roulette = "star", Blackjack = "crown", Dice = "ticket", Wheel = "star", Plinko = "gem",
 	Snacks = "popcorn", Drinks = "gem", Souvenirs = "gift", Vending = "cash",
 }
 
 -- card tone per catalog type (each item gets its own colour, PS99-style)
 UIAssets.TypeTone = {
-	Slots = "Red", Roulette = "Green", Blackjack = "Blue", Dice = "Orange", Wheel = "Purple",
+	Slots = "Red", Roulette = "Green", Blackjack = "Blue", Dice = "Orange", Wheel = "Purple", Plinko = "Blue",
 	Snacks = "Orange", Drinks = "Blue", Souvenirs = "Pink", Vending = "Purple",
 }
 
+-- icons of the Rebirth & Rewards update that aren't uploaded yet show the closest
+-- existing render instead (remove an entry once its own icon is in Icons)
+UIAssets.Fallback = {} :: {[string]: string}
+
 function UIAssets.icon(name: string?): string
-	return (name and UIAssets.Icons[name]) or ""
+	if not name then return "" end
+	return UIAssets.Icons[name] or UIAssets.Icons[UIAssets.Fallback[name] or ""] or ""
 end
 
 return UIAssets

@@ -71,6 +71,62 @@ local F = UILib.Fonts
 UILib.IsTouch = UserInputService.TouchEnabled and not UserInputService.MouseEnabled
 
 ------------------------------------------------------------------
+-- juice hooks — the optional effects layer (CasinoClient/UXFX) plugs in
+-- here. Nothing depends on it: until UXFX starts, emit() has no listeners
+-- and UILib.fx() returns nil, so every UI works the same without it.
+--   UILib.fx(method, ...)  safe call into UXFX, e.g. UILib.fx("banner", "RANK UP!")
+--                          (returns nil when UXFX isn't running or errors)
+--   UILib.onFx(fn)         fn(event, ...) for the events below; returns unsubscribe
+--     "press" (click)      any glossy / close / rail button activated
+--     "hover" (click)      mouse entered one of those buttons
+--     "tab" (tabFrame)     a tab picked by the player
+--     "panelOpen" (holder, name) / "panelClose" (instant)
+--     "toast" (kind, card, tile, title, message)
+--   UILib.fxTargets        HUD anchors coins fly to (HudUI fills .cash / .tickets)
+--   UILib.lastPress        { gui, at (centre, AbsolutePosition space), t = os.clock() }
+------------------------------------------------------------------
+UILib.FX = nil
+UILib.fxTargets = {}
+UILib.lastPress = nil
+local fxHandlers: {(string, ...any) -> ()} = {}
+local fxWarned = 0
+local function fxWarn(msg: string)
+	if fxWarned < 8 then -- a broken hook must not flood the output
+		fxWarned += 1
+		warn("[UILib] fx: " .. msg)
+	end
+end
+function UILib.onFx(fn): () -> ()
+	table.insert(fxHandlers, fn)
+	return function()
+		local i = table.find(fxHandlers, fn)
+		if i then table.remove(fxHandlers, i) end
+	end
+end
+local function emit(event: string, ...)
+	for _, fn in fxHandlers do
+		local ok, err = pcall(fn, event, ...)
+		if not ok then fxWarn(event .. ": " .. tostring(err)) end
+	end
+end
+UILib.emit = emit
+function UILib.fx(method: string, ...)
+	local fx = UILib.FX
+	local f = fx and fx[method]
+	if type(f) ~= "function" then return nil end
+	local ok, a, b = pcall(f, ...)
+	if not ok then
+		fxWarn(method .. ": " .. tostring(a))
+		return nil
+	end
+	return a, b
+end
+local function notePress(gui: GuiObject)
+	UILib.lastPress = { gui = gui, at = gui.AbsolutePosition + gui.AbsoluteSize / 2, t = os.clock() }
+	emit("press", gui)
+end
+
+------------------------------------------------------------------
 -- small helpers
 ------------------------------------------------------------------
 function UILib.darken(c: Color3, f: number?): Color3
@@ -83,7 +139,11 @@ function UILib.lighten(c: Color3, f: number?): Color3
 end
 
 function UILib.commas(n: number): string
-	local s = tostring(math.floor(n or 0))
+	n = tonumber(n) or 0
+	if n ~= n or n == math.huge or n == -math.huge then return "0" end
+	-- "%.0f" keeps every digit past 1e15, where tostring() would print "1e+15"
+	local s = string.format("%.0f", math.floor(n))
+	if s == "-0" then s = "0" end
 	local k
 	repeat s, k = s:gsub("^(-?%d+)(%d%d%d)", "%1,%2") until k == 0
 	return s
@@ -99,6 +159,47 @@ function UILib.abbreviate(n: number): string
 end
 function UILib.money(n: number): string
 	return "$" .. UILib.abbreviate(n)
+end
+-- tight spots (buttons, chips, bars): 3 significant digits from 1,000 up —
+-- 1.25K / 12.5K / 125K / 1.25M / 12.5M / 1.25B. Rounds DOWN, so a goal never
+-- reads as reached before it is ($1,699,999 -> 1.69M, not 1.70M).
+local SHORT_SUFFIXES = { "", "K", "M", "B", "T", "Qa", "Qi" }
+function UILib.short(n: number): string
+	n = tonumber(n) or 0
+	if n ~= n then return "0" end
+	local sign = n < 0 and "-" or ""
+	local a = math.abs(n)
+	if a == math.huge then return sign .. "LOTS" end
+	if a < 1000 then return sign .. string.format("%d", math.floor(a)) end
+	local i, unit = 1, 1
+	while a >= unit * 1000 and i < #SHORT_SUFFIXES do
+		unit *= 1000
+		i += 1
+	end
+	local whole = a / unit
+	local digits = whole >= 100 and 0 or (whole >= 10 and 1 or 2)
+	local v = math.floor(a / (unit / 10 ^ digits)) / 10 ^ digits
+	local s = string.format("%." .. digits .. "f", v)
+	if digits > 0 then
+		s = (s:gsub("0+$", ""))
+		s = (s:gsub("%.$", ""))
+	end
+	return sign .. s .. SHORT_SUFFIXES[i]
+end
+function UILib.moneyShort(n: number): string
+	n = tonumber(n) or 0
+	return (n < 0 and "-$" or "$") .. UILib.short(math.abs(n))
+end
+-- full digits where there is room: $1,234,567,890
+function UILib.moneyFull(n: number): string
+	n = tonumber(n) or 0
+	return (n < 0 and "-$" or "$") .. UILib.commas(math.abs(n))
+end
+-- full digits while they fit `maxChars` (incl. "$" and commas), else short
+function UILib.moneyFit(n: number, maxChars: number?): string
+	local full = UILib.moneyFull(n)
+	if #full <= (maxChars or 12) then return full end
+	return UILib.moneyShort(n)
 end
 function UILib.clock(seconds: number): string
 	seconds = math.max(0, math.floor(seconds))
@@ -165,7 +266,8 @@ local tween = UILib.tween
 local function resolveIcon(icon: string?): string
 	if not icon or icon == "" then return "" end
 	if string.find(icon, "rbxasset") then return icon end
-	return Assets.Icons[icon] or Assets.Textures[icon] or ""
+	local fallback = Assets.Fallback and Assets.Fallback[icon]
+	return Assets.Icons[icon] or Assets.Textures[icon] or (fallback and Assets.Icons[fallback]) or ""
 end
 UILib.resolveIcon = resolveIcon
 
@@ -323,6 +425,29 @@ function UILib.image(parent: Instance?, icon: string?, o)
 end
 
 ------------------------------------------------------------------
+-- 3D model icons: the real machine / stand / decor piece / staff rig in a
+-- ViewportFrame (CasinoClient/ModelIcons, loaded on first use; see its header
+-- for the opts). Returns the ViewportFrame, or nil when ModelIcons can't run:
+-- the caller keeps its image icon then. UILib.card and UILib.row take
+-- o.model = { kind, id, framing? } and UILib.panel o.iconModel = { kind, id }.
+------------------------------------------------------------------
+local modelIcons = nil -- the module (false: it failed to load)
+function UILib.modelIcon(parent: Instance, kind: string?, id: any, opts): ViewportFrame?
+	if modelIcons == nil then
+		local mod = script.Parent:FindFirstChild("ModelIcons")
+		local ok, res = false, "missing"
+		if mod then ok, res = pcall(require, mod) end
+		modelIcons = (ok and type(res) == "table" and type(res.attach) == "function") and res or false
+		if not modelIcons then warn("[UILib] ModelIcons unavailable: " .. tostring(res)) end
+	end
+	if not modelIcons or parent == nil or kind == nil or id == nil then return nil end
+	local ok, vf = pcall(modelIcons.attach, parent, kind, id, opts)
+	if ok then return vf end
+	warn("[UILib] modelIcon: " .. tostring(vf))
+	return nil
+end
+
+------------------------------------------------------------------
 -- slowly rotating sunbursts (one shared loop)
 ------------------------------------------------------------------
 local spinning: {[GuiObject]: number} = {} -- strong: see the note on `scaled`
@@ -357,7 +482,7 @@ end
 -- animated number: eases a label from its last shown value to `target`
 ------------------------------------------------------------------
 local counting: {[TextLabel]: thread} = {} -- strong; entries clear when a count finishes
-function UILib.countTo(label: TextLabel, target: number, formatter: ((number) -> string)?)
+function UILib.countTo(label: TextLabel, target: number, formatter: ((number) -> string)?, duration: number?)
 	local fmt = formatter or UILib.abbreviate
 	local from = label:GetAttribute("CountValue")
 	label:SetAttribute("CountValue", target)
@@ -368,7 +493,7 @@ function UILib.countTo(label: TextLabel, target: number, formatter: ((number) ->
 	end
 	counting[label] = task.spawn(function()
 		local t0 = os.clock()
-		local dur = 0.5
+		local dur = duration or 0.5
 		while label.Parent do
 			local a = math.min((os.clock() - t0) / dur, 1)
 			a = 1 - (1 - a) ^ 3
@@ -390,8 +515,13 @@ end
 local function pressJuice(click: GuiButton, scale: UIScale, face: GuiObject, extra: GuiObject?)
 	local hovered = false
 	local function rest() return hovered and 1.05 or 1 end
+	click.Activated:Connect(function() notePress(click) end)
 	if not UILib.IsTouch then
-		click.MouseEnter:Connect(function() hovered = true; tween(scale, { Scale = 1.05 }, 0.12) end)
+		click.MouseEnter:Connect(function()
+			hovered = true
+			tween(scale, { Scale = 1.05 }, 0.12)
+			emit("hover", click)
+		end)
 		click.MouseLeave:Connect(function()
 			hovered = false
 			tween(scale, { Scale = 1 }, 0.12)
@@ -414,6 +544,9 @@ local function pressJuice(click: GuiButton, scale: UIScale, face: GuiObject, ext
 		if input.UserInputType == Enum.UserInputType.Touch then up() end
 	end)
 end
+-- the shared press feel (hover grow, press-down, click / hover fx events) for
+-- custom clickables: UILib.pressJuice(clickButton, uiScale, movingFace, extra?)
+UILib.pressJuice = pressJuice
 
 function UILib.button(o)
 	o = o or {}
@@ -587,6 +720,176 @@ function UILib.pips(parent: Instance, level: number, max: number, order: number?
 end
 
 ------------------------------------------------------------------
+-- fit one line: the largest TextSize (maxSize down to minSize) at which `text`
+-- fits `width` design px. Works on UILib.text faces (the shadow follows).
+------------------------------------------------------------------
+function UILib.fitText(label: TextLabel, text: string, maxSize: number, width: number, minSize: number?): number
+	local size = maxSize
+	local least = minSize or math.max(8, math.floor(maxSize * 0.55))
+	local font = label.Font
+	while size > least do
+		local ok, b = pcall(function()
+			return TextService:GetTextSize(text, size, font, Vector2.new(4000, 400))
+		end)
+		if not ok or b.X <= width then break end
+		size -= 1
+	end
+	label.TextSize = size
+	label.Text = text
+	return size
+end
+
+------------------------------------------------------------------
+-- progress bar — dark ink track, glossy tone fill with a shine band and a
+-- centred Fredoka label with an ink outline
+-- o: parent, size, position, anchor, order, z, name, tone ("Gold"), text,
+--    textSize, value (0..1), strokeWidth
+-- returns { Instance, Fill, Label, value, set(frac, text?, instant?), setTone(name) }
+------------------------------------------------------------------
+function UILib.progressBar(parent: Instance?, o)
+	o = o or {}
+	local z = o.z or 1
+	local root = make("Frame", {
+		Name = o.name or "Progress", BackgroundColor3 = hex("#3B0E19"), BorderSizePixel = 0,
+		Size = o.size or UDim2.fromOffset(220, 22), Position = o.position or UDim2.new(),
+		AnchorPoint = o.anchor or Vector2.zero, LayoutOrder = o.order or 0, ZIndex = z, Parent = parent,
+	})
+	corner(root, 999)
+	stroke(root, C.Ink, o.strokeWidth or 3, true)
+	-- the groove's inner shadow along the top
+	make("Frame", {
+		Name = "Groove", BackgroundColor3 = C.Ink, BackgroundTransparency = 0.4, BorderSizePixel = 0,
+		Size = UDim2.new(1, 0, 0.45, 0), ZIndex = z, Parent = root,
+	}, { make("UICorner", { CornerRadius = UDim.new(0.5, 0) }) })
+	local track = make("Frame", {
+		Name = "Track", BackgroundTransparency = 1, Position = UDim2.fromOffset(2, 2),
+		Size = UDim2.new(1, -4, 1, -4), ZIndex = z, Parent = root,
+	})
+	local fill = make("Frame", {
+		Name = "Fill", BackgroundColor3 = C.White, BorderSizePixel = 0, Size = UDim2.fromScale(0, 1),
+		Visible = false, ZIndex = z, Parent = track,
+	})
+	corner(fill, 999)
+	local grad = make("UIGradient", { Rotation = 90, Parent = fill })
+	make("Frame", {
+		Name = "Shine", BackgroundColor3 = C.White, BackgroundTransparency = 0.5, BorderSizePixel = 0,
+		Position = UDim2.new(0, 3, 0, 2), Size = UDim2.new(1, -6, 0.32, 0), ZIndex = z, Parent = fill,
+	}, { make("UICorner", { CornerRadius = UDim.new(0.5, 0) }) })
+	local ts = o.textSize or 14
+	local label = UILib.text(root, {
+		name = "Label", text = o.text or "", font = F.Number, size = ts, stroke = math.max(1.5, ts / 7),
+		shadow = math.max(1, math.floor(ts / 9)), z = z + 1,
+	})
+	local api = { Instance = root, Fill = fill, Label = label, value = 0 }
+	function api.setTone(name: string)
+		local t = Tones[name] or Tones.Gold
+		grad.Color = ColorSequence.new(t.top, t.base)
+	end
+	function api.set(frac: number?, text: string?, instant: boolean?)
+		local f = math.clamp(tonumber(frac) or 0, 0, 1)
+		api.value = f
+		if text then label.Text = text end
+		fill.Visible = f > 0
+		local goal = UDim2.fromScale(f, 1)
+		if instant then
+			if active[fill] then active[fill]:Cancel() end
+			fill.Size = goal
+		else
+			tween(fill, { Size = goal }, 0.4, Enum.EasingStyle.Quad)
+		end
+	end
+	api.setTone(o.tone or "Gold")
+	api.set(o.value or 0, nil, true)
+	return api
+end
+
+------------------------------------------------------------------
+-- rank chip — a gold casino chip (cream edge notches, crimson centre) with a
+-- big extruded number; optional caption ("RANK"), crown on top, glow behind
+-- o: parent, size (px, 64), position, anchor, order, z, name, number,
+--    caption, crown, glow (default on), dim (greyed: a rank not reached yet)
+-- returns { Instance, Chip, Face, Number, set(n) }
+------------------------------------------------------------------
+function UILib.medallion(parent: Instance?, o)
+	o = o or {}
+	local s = o.size or 64
+	local z = o.z or 1
+	local root = make("Frame", {
+		Name = o.name or "Medallion", BackgroundTransparency = 1, Size = UDim2.fromOffset(s, s),
+		Position = o.position or UDim2.new(), AnchorPoint = o.anchor or Vector2.zero,
+		LayoutOrder = o.order or 0, ZIndex = z, Parent = parent,
+	})
+	if o.glow ~= false and not o.dim then
+		UILib.image(root, UILib.Tex.glow, {
+			name = "Glow", size = UDim2.fromOffset(s * 1.75, s * 1.75), anchor = Vector2.new(0.5, 0.5),
+			position = UDim2.fromScale(0.5, 0.5), color = C.GoldTop, transparency = 0.4, z = z,
+		})
+	end
+	local drop = make("Frame", {
+		Name = "Drop", BackgroundColor3 = C.Ink, BorderSizePixel = 0, Size = UDim2.fromScale(1, 1),
+		Position = UDim2.fromOffset(0, math.max(2, math.floor(s * 0.06))), ZIndex = z, Parent = root,
+	})
+	corner(drop, 999)
+	local chip = make("Frame", {
+		Name = "Chip", BackgroundColor3 = C.White, BorderSizePixel = 0, Size = UDim2.fromScale(1, 1),
+		ZIndex = z, Parent = root,
+	})
+	corner(chip, 999)
+	local chipGrad = gradient(chip, C.GoldTop, C.GoldDeep, C.Gold)
+	stroke(chip, C.Ink, math.max(2.5, s / 20), true)
+	for i = 0, 7 do -- the chip's edge spots
+		local deg = i * 45 + 22.5
+		local a = math.rad(deg)
+		local r = s * 0.425
+		local notch = make("Frame", {
+			Name = "Notch", BackgroundColor3 = C.Cream, BorderSizePixel = 0, AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, math.cos(a) * r, 0.5, math.sin(a) * r),
+			Size = UDim2.fromOffset(math.max(3, math.floor(s * 0.09)), math.max(5, math.floor(s * 0.15))),
+			Rotation = deg + 90, ZIndex = z, Parent = chip,
+		})
+		corner(notch, 2)
+	end
+	local inset = math.floor(s * 0.17)
+	local face = make("Frame", {
+		Name = "Face", BackgroundColor3 = C.White, BorderSizePixel = 0, Position = UDim2.fromOffset(inset, inset),
+		Size = UDim2.new(1, -2 * inset, 1, -2 * inset), ZIndex = z, Parent = chip,
+	})
+	corner(face, 999)
+	local faceGrad = gradient(face, C.CrimsonTop, C.CrimsonDeep)
+	stroke(face, C.GoldShadow, math.max(1.5, s / 34), true)
+	make("Frame", {
+		Name = "Shine", BackgroundColor3 = C.White, BackgroundTransparency = 0.72, BorderSizePixel = 0,
+		Position = UDim2.fromScale(0.2, 0.07), Size = UDim2.fromScale(0.6, 0.3), ZIndex = z, Parent = chip,
+	}, { make("UICorner", { CornerRadius = UDim.new(0.5, 0) }) })
+	local cap = o.caption
+	local num = UILib.text(face, {
+		name = "Number", text = tostring(o.number or ""), size = math.floor(s * (cap and 0.36 or 0.42)),
+		gradient = { C.White, C.GoldTop }, stroke = math.max(1.5, s / 26), shadow = math.max(1, math.floor(s / 22)),
+		z = z, frameSize = UDim2.fromScale(1, cap and 0.72 or 1), position = UDim2.fromScale(0, cap and 0.3 or 0),
+	})
+	if cap then
+		UILib.text(face, {
+			name = "Caption", text = cap, size = math.max(8, math.floor(s * 0.125)), color = C.GoldTop,
+			stroke = math.max(1, s / 60), shadow = 0, z = z,
+			frameSize = UDim2.fromScale(1, 0.26), position = UDim2.fromScale(0, 0.08),
+		})
+	end
+	if o.crown then
+		UILib.image(root, "crown", {
+			name = "Crown", size = UDim2.fromOffset(s * 0.58, s * 0.58), anchor = Vector2.new(0.5, 0.8),
+			position = UDim2.fromScale(0.5, 0.02), rotation = -12, z = z + 1,
+		})
+	end
+	if o.dim then -- a rank still ahead: pewter instead of gold
+		chipGrad.Color = ColorSequence.new(hex("#E4DAD0"), hex("#9C8F86"))
+		faceGrad.Color = ColorSequence.new(hex("#8A7C76"), hex("#4E423E"))
+	end
+	local api = { Instance = root, Chip = chip, Face = face, Number = num }
+	function api.set(n) num.Text = tostring(n) end
+	return api
+end
+
+------------------------------------------------------------------
 -- panels (exclusive: opening one closes the previous)
 -- o: name, title, icon, width, height, onClose
 -- returns { holder, content, inner, close(), onClose(fn), alive }
@@ -694,7 +997,8 @@ function UILib.panel(o)
 	if o.title then
 		local tw = TextService:GetTextSize(o.title, 46, F.Display, Vector2.new(2000, 100)).X
 		local hasIcon = o.icon ~= nil
-		local RW = tw + (hasIcon and 150 or 100)
+		local iconModel = type(o.iconModel) == "table" and o.iconModel or nil -- { kind, id }: the real model
+		local RW = tw + (hasIcon and (iconModel and 164 or 150) or 100)
 		local ribbon = make("Frame", {
 			Name = "Ribbon", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, -42),
 			Size = UDim2.fromOffset(RW, 78), BackgroundTransparency = 1, ZIndex = Z + 4, Parent = popper,
@@ -720,7 +1024,19 @@ function UILib.panel(o)
 			Name = "Row", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = Z + 5, Parent = band,
 		})
 		UILib.list(row, "x", 6, Enum.HorizontalAlignment.Center, Enum.VerticalAlignment.Center)
-		if hasIcon then
+		if hasIcon and iconModel then
+			-- the real model (ModelIcons), the image as its fallback
+			local holder = make("Frame", {
+				Name = "IconModel", BackgroundTransparency = 1, Size = UDim2.fromOffset(80, 80), LayoutOrder = 1,
+				ZIndex = Z + 5, Parent = row,
+			})
+			local img = UILib.image(holder, o.icon, {
+				size = UDim2.fromOffset(66, 66), anchor = Vector2.new(0.5, 0.5), position = UDim2.fromScale(0.5, 0.5), z = Z + 5,
+			})
+			UILib.modelIcon(holder, iconModel.kind, iconModel.id, {
+				z = Z + 5, fallback = img, margin = 0.05, framing = iconModel.framing,
+			})
+		elseif hasIcon then
 			UILib.image(row, o.icon, { size = UDim2.fromOffset(66, 66), order = 1, z = Z + 5 })
 		end
 		UILib.text(row, {
@@ -743,6 +1059,7 @@ function UILib.panel(o)
 		p.alive = false
 		if activePanel == p then activePanel = nil end
 		if not released then released = true; UILib.blur(false) end
+		emit("panelClose", instant == true)
 		for _, fn in closers do task.spawn(fn) end
 		if instant then
 			holder:Destroy(); backdrop:Destroy()
@@ -766,6 +1083,7 @@ function UILib.panel(o)
 	end)
 
 	tween(pop, { Scale = 1 }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+	emit("panelOpen", holder, name)
 
 	-- marquee chase: alternate bulbs swap every 0.35 s while open
 	task.spawn(function()
@@ -844,7 +1162,10 @@ function UILib.tabs(parent: Instance, items, onSelect, initial)
 		})
 		local e = { id = it.id, frame = f, grad = grad, stroke = st, onLabel = onLabel, offLabel = offLabel }
 		table.insert(entries, e)
-		click.Activated:Connect(function() api.select(it.id) end)
+		click.Activated:Connect(function()
+			if current ~= it.id then emit("tab", f) end
+			api.select(it.id)
+		end)
 	end
 	if initial then
 		current = initial
@@ -857,8 +1178,9 @@ end
 ------------------------------------------------------------------
 -- item card (shop / inventory / store)
 -- o: parent, tone, title, stat, icon, order, button = { tone, text, icon,
---    onClick }, badge = { text, tone }, dim
--- returns { Instance, button }
+--    onClick }, badge = { text, tone }, dim, model = { kind, id, framing? }
+--    (the real model on the stage, UILib.modelIcon; the icon is its fallback)
+-- returns { Instance, button, icon, model (ViewportFrame?) }
 ------------------------------------------------------------------
 function UILib.card(o)
 	local t = Tones[o.tone or "Blue"] or Tones.Blue
@@ -908,6 +1230,16 @@ function UILib.card(o)
 	})
 	corner(stageRing, 18)
 	stroke(stageRing, C.Ink, 3, true)
+	-- the real model stands on the stage: over the CanvasGroup, not in it (a
+	-- viewport inside one would re-render the whole group), under the ring
+	local model = nil
+	if type(o.model) == "table" then
+		model = UILib.modelIcon(body, o.model.kind, o.model.id, {
+			name = "Model", position = UDim2.fromOffset(14, 13), size = UDim2.new(1, -28, 0, 125), z = 2,
+			fallback = icon, hover = root, dim = o.dim, align = "bottom", bottom = 0.1, framing = o.model.framing,
+		})
+		if model then stageRing.ZIndex = 3 end
+	end
 
 	UILib.text(body, {
 		name = "Title", text = o.title or "", size = o.titleSize or 22,
@@ -947,12 +1279,13 @@ function UILib.card(o)
 		root.MouseEnter:Connect(function() tween(hover, { Scale = 1.04 }, 0.15) end)
 		root.MouseLeave:Connect(function() tween(hover, { Scale = 1 }, 0.15) end)
 	end
-	return { Instance = root, button = btn, icon = icon }
+	return { Instance = root, button = btn, icon = icon, model = model }
 end
 
 ------------------------------------------------------------------
 -- list row (upgrades / manage / stats)
--- o: parent, tone, icon, title, desc, order, height
+-- o: parent, tone, icon, title, desc, order, height, model = { kind, id, framing? }
+--    (the real model on the tile, UILib.modelIcon; the icon is its fallback)
 -- returns { Instance, info (Frame), right (Frame for buttons) }
 ------------------------------------------------------------------
 function UILib.row(o)
@@ -976,9 +1309,15 @@ function UILib.row(o)
 		size = UDim2.fromScale(1.1, 1.1), anchor = Vector2.new(0.5, 0.5), position = UDim2.fromScale(0.5, 0.5),
 		transparency = 0.45,
 	})
-	UILib.image(tile, o.icon, {
+	local tileIcon = UILib.image(tile, o.icon, {
 		size = UDim2.fromScale(1.05, 1.05), anchor = Vector2.new(0.5, 0.5), position = UDim2.fromScale(0.5, 0.46),
 	})
+	if type(o.model) == "table" then
+		UILib.modelIcon(tile, o.model.kind, o.model.id, {
+			name = "Model", position = UDim2.fromOffset(3, 3), size = UDim2.new(1, -6, 1, -6), z = 3, fallback = tileIcon,
+			hover = r, shadow = true, align = "bottom", bottom = 0.1, margin = 0.06, framing = o.model.framing,
+		})
+	end
 	local info = make("Frame", {
 		Name = "Info", BackgroundTransparency = 1, Position = UDim2.fromOffset(tileSize + 26, 0),
 		Size = UDim2.new(1, -(tileSize + 26) - (o.rightWidth or 210), 1, 0), Parent = r,
@@ -1004,6 +1343,42 @@ function UILib.row(o)
 end
 
 -- scrolling container with a vertical list or a grid
+-- scroll memory: a list the panel rebuilds in the same place (a purchase pushes a
+-- snapshot and the panel re-renders) keeps where you were scrolled to. Scoped to
+-- the parent frame (a panel opened again starts at the top) and keyed by the
+-- scroller's `memory` option (e.g. the tab id, so each tab keeps its own spot).
+local scrollMemory: {[Instance]: {[any]: Vector2}} = {}
+
+-- put a freshly filled scroller back at `pos` once its canvas has grown big
+-- enough (AutomaticCanvasSize settles a frame or two after the content goes in)
+local function restoreScroll(s: ScrollingFrame, pos: Vector2, onDone: (() -> ())?)
+	local done = false
+	local conn: RBXScriptConnection? = nil
+	local function finish()
+		if done then return end
+		done = true
+		if conn then conn:Disconnect() end
+		if onDone then onDone() end
+	end
+	local function try()
+		if done or not s.Parent then return end
+		local maxY = math.max(0, s.AbsoluteCanvasSize.Y - s.AbsoluteWindowSize.Y)
+		s.CanvasPosition = Vector2.new(pos.X, math.min(pos.Y, maxY))
+		if maxY + 0.5 >= pos.Y then finish() end
+	end
+	conn = s:GetPropertyChangedSignal("AbsoluteCanvasSize"):Connect(try)
+	try()
+	task.delay(0.8, finish) -- the content is shorter now: stay where it clamped
+end
+UILib.restoreScroll = restoreScroll
+
+-- rebuild a scroller's content in place without losing the scroll position
+function UILib.keepScroll(s: ScrollingFrame, rebuild: () -> ())
+	local pos = s.CanvasPosition
+	rebuild()
+	if pos.Y > 0.5 then restoreScroll(s, pos) end
+end
+
 function UILib.scroller(parent: Instance, o)
 	o = o or {}
 	local s = make("ScrollingFrame", {
@@ -1022,6 +1397,25 @@ function UILib.scroller(parent: Instance, o)
 	else
 		UILib.list(s, "y", o.padding or 12)
 	end
+	if o.memory ~= nil then
+		local mem = scrollMemory[parent]
+		if not mem then
+			mem = {}
+			scrollMemory[parent] = mem
+			parent.Destroying:Connect(function() scrollMemory[parent] = nil end)
+		end
+		local key = o.memory
+		local saved = mem[key]
+		-- (not while restoring: the canvas is still small and clamps the position)
+		local tracking = not (saved and saved.Y > 0.5)
+		s:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+			if tracking and s.Parent then mem[key] = s.CanvasPosition end
+		end)
+		if not tracking then
+			-- after the caller has filled the list
+			task.defer(restoreScroll, s, saved, function() tracking = true end)
+		end
+	end
 	return s
 end
 
@@ -1038,7 +1432,7 @@ function UILib.currencyPill(parent: Instance, o)
 	corner(root, 999)
 	stroke(root, C.GoldDeep, 3, true)
 	local pop = make("UIScale", { Parent = root }) :: UIScale
-	UILib.image(root, o.icon, { size = UDim2.fromOffset(76, 76), position = UDim2.fromOffset(-22, -13), z = 2 })
+	local icon = UILib.image(root, o.icon, { size = UDim2.fromOffset(76, 76), position = UDim2.fromOffset(-22, -13), z = 2 })
 	local value = UILib.text(root, {
 		text = o.text or "0", font = F.Number, size = 28, xAlign = Enum.TextXAlignment.Left,
 		frameSize = UDim2.new(1, -116, 1, 0), position = UDim2.fromOffset(60, 0), stroke = 3.5, shadow = 3,
@@ -1050,9 +1444,10 @@ function UILib.currencyPill(parent: Instance, o)
 			radius = 13, onClick = o.onPlus,
 		})
 	end
-	local api = { Instance = root, Value = value }
-	function api.set(n: number, formatter)
-		UILib.countTo(value, n, formatter)
+	-- Icon: where flying coins land (UXFX)
+	local api = { Instance = root, Value = value, Icon = icon }
+	function api.set(n: number, formatter, duration: number?)
+		UILib.countTo(value, n, formatter, duration)
 	end
 	function api.bump()
 		pop.Scale = 1.08
@@ -1138,7 +1533,10 @@ end
 ------------------------------------------------------------------
 -- toasts — cream cards that slide in at the top centre and stack
 -- UILib.toast(title, kind?, message?) ; kind = "income" | "unlock" | "error" | "info"
--- (a Color3 is still accepted as `kind` for older call sites)
+-- | "ticket" | "placed" (a Color3 is still accepted as `kind` for older call sites).
+-- Every toast is announced to the juice hooks (emit "toast"), so UXFX gives
+-- each kind its sound + effect: unlock = ka-ching + confetti, error = buzz +
+-- shake, income = coins ...
 ------------------------------------------------------------------
 local TOAST_KINDS = {
 	income = { tone = "Green", icon = "coin" },
@@ -1146,11 +1544,13 @@ local TOAST_KINDS = {
 	error = { tone = "Red", icon = "close" },
 	info = { tone = "Blue", icon = "gem" },
 	ticket = { tone = "Pink", icon = "ticket" },
+	placed = { tone = "Green", icon = "build" }, -- placement: the drop-in plays its own effect
 }
 -- Two stacks: top-centre normally; top-right while a panel is open (the HUD is
 -- dimmed then, and panels are centred), so toasts never cover a panel.
 local toastHosts: {[string]: Frame} = {}
 local activeToasts: {[string]: {Frame}} = { top = {}, side = {} }
+local toastTopInset = 0 -- design px kept clear above the top stack (see setToastTopInset)
 local function getToastHost(where: string): Frame
 	local h = toastHosts[where]
 	if h and h.Parent then return h end
@@ -1166,19 +1566,25 @@ local function getToastHost(where: string): Frame
 	return h
 end
 local function reflow(where: string)
-	local y = 0
+	local y = where == "top" and toastTopInset or 0
 	for i = #activeToasts[where], 1, -1 do -- newest on top
 		local t = activeToasts[where][i]
 		tween(t, { Position = UDim2.new(0.5, 0, 0, y) }, 0.22)
 		y += t.Size.Y.Offset + 10
 	end
 end
+-- the HUD's travel bar sits top-centre: top toasts stack below it
+function UILib.setToastTopInset(px: number)
+	toastTopInset = px
+	reflow("top")
+end
 function UILib.toast(title: string, kind, message: string?)
 	if typeof(kind) == "Color3" then
 		kind = (kind == C.Green or kind == C.GreenTop) and "income"
 			or ((kind == C.Crimson or kind == C.Red) and "error" or "unlock")
 	end
-	local k = TOAST_KINDS[kind or "info"] or TOAST_KINDS.info
+	local kindName = TOAST_KINDS[kind or "info"] and (kind or "info") or "info"
+	local k = TOAST_KINDS[kindName]
 	local t = Tones[k.tone]
 	local where = UILib.hasOpenPanel() and "side" or "top"
 	local host = getToastHost(where)
@@ -1221,6 +1627,7 @@ function UILib.toast(title: string, kind, message: string?)
 		if old then old:Destroy() end
 	end
 	reflow(where)
+	emit("toast", kindName, card, tile, title, message)
 	task.delay(3, function()
 		if not card.Parent then return end
 		local idx = table.find(list, card)
@@ -1290,6 +1697,68 @@ end
 -- seconds left on a server-sent countdown field, corrected for time since the snapshot
 function UILib.secondsLeft(field: number?): number
 	return math.max(0, (field or 0) - (os.clock() - UILib.stateTime))
+end
+
+------------------------------------------------------------------
+-- "NEW" markers — a client-only unseen set for this session (nothing is
+-- saved, nothing goes to the server). RankUI marks what a rank-up unlocked;
+-- any UI can show a NEW badge and mark it seen once the player has looked.
+--   kinds: "machine" (catalog id, stands too), "upgrade" (track id), "floor" (story number)
+--   UILib.markNew(kind, id)            UILib.isNew(kind, id) -> boolean
+--   UILib.markSeen(kind, id?)          id nil = everything of that kind
+--   UILib.newCount(kind?) -> number    UILib.newIds(kind) -> { [id (string)] = os.clock() it was marked }
+--   UILib.onNewChanged(fn) -> unsubscribe     fn(kind) after any change
+------------------------------------------------------------------
+local newMarks: {[string]: {[string]: number}} = {}
+local newSubs: {(string) -> ()} = {}
+local function newChanged(kind: string)
+	for _, fn in newSubs do task.spawn(fn, kind) end
+end
+function UILib.markNew(kind: string, id: any)
+	if type(kind) ~= "string" or id == nil then return end
+	local set = newMarks[kind]
+	if not set then
+		set = {}
+		newMarks[kind] = set
+	end
+	set[tostring(id)] = os.clock()
+	newChanged(kind)
+end
+function UILib.isNew(kind: string, id: any): boolean
+	local set = newMarks[kind]
+	return set ~= nil and id ~= nil and set[tostring(id)] ~= nil
+end
+function UILib.markSeen(kind: string, id: any?)
+	local set = newMarks[kind]
+	if not set then return end
+	if id == nil then
+		if next(set) == nil then return end
+		table.clear(set)
+	else
+		local key = tostring(id)
+		if set[key] == nil then return end
+		set[key] = nil
+	end
+	newChanged(kind)
+end
+function UILib.newCount(kind: string?): number
+	local n = 0
+	for k, set in newMarks do
+		if kind == nil or k == kind then
+			for _ in set do n += 1 end
+		end
+	end
+	return n
+end
+function UILib.newIds(kind: string): {[string]: number}
+	return table.clone(newMarks[kind] or {})
+end
+function UILib.onNewChanged(fn): () -> ()
+	table.insert(newSubs, fn)
+	return function()
+		local i = table.find(newSubs, fn)
+		if i then table.remove(newSubs, i) end
+	end
 end
 
 return UILib

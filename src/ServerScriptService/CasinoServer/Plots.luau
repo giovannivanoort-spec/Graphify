@@ -75,12 +75,25 @@ local function setSign(rec, text: string)
 	for _, label in rec.signLabels or {} do label.Text = text end
 end
 
+-- the building (Buildings.luau) writes the casino name through this
+function Plots.setSignText(rec, text: string)
+	setSign(rec, text)
+end
+
+-- optional hooks, set by Buildings.start: rebuild a plot's building when it
+-- gets an owner / is freed again
+Plots.onAssigned = nil :: ((any) -> ())?
+Plots.onReleased = nil :: ((any) -> ())?
+
 ------------------------------------------------------------------
--- neon rim + corner glow (night-strip look): dim steel blue while a plot is
--- open, champagne gold once it's someone's casino. Built from code each boot
--- so it survives the physical map drifting out of Rojo.
+-- neon rim + corner glow for BARE plots (no casino building): warm stone
+-- while a plot is open, champagne gold once it's someone's casino. Built from
+-- code each boot so it survives the physical map drifting out of Rojo.
+-- Strip plots (they carry a "Frontage") get no rim: Buildings.luau builds the
+-- casino, its entrance and its night lighting there, and a neon rim would
+-- only read as a glowing baseboard through the doorway.
 ------------------------------------------------------------------
-local TRIM_FREE = Color3.fromRGB(96, 104, 136)
+local TRIM_FREE = Color3.fromRGB(130, 112, 92)
 local TRIM_OWNED = Color3.fromRGB(255, 196, 90)
 
 local function buildTrim(rec)
@@ -90,6 +103,9 @@ local function buildTrim(rec)
 	for _, child in base:GetChildren() do
 		if child.Name == "PlotTrim" or child.Name == "PlotGlow" then child:Destroy() end
 	end
+	rec.trims = {}
+	rec.trimLights = {}
+	if rec.model:FindFirstChild("Frontage") then return end
 
 	local sx, sy, sz = base.Size.X, base.Size.Y, base.Size.Z
 	local specs = {
@@ -98,7 +114,6 @@ local function buildTrim(rec)
 		{ Vector3.new(sx / 2, sy / 2 + 0.15, 0), Vector3.new(0.4, 0.3, sz + 0.4) },
 		{ Vector3.new(-sx / 2, sy / 2 + 0.15, 0), Vector3.new(0.4, 0.3, sz + 0.4) },
 	}
-	rec.trims = {}
 	for _, spec in specs do
 		local p = Instance.new("Part")
 		p.Name = "PlotTrim"
@@ -113,10 +128,7 @@ local function buildTrim(rec)
 		table.insert(rec.trims, p)
 	end
 
-	-- corner spill so the rim actually lights the carpet after dark — only on
-	-- bare plots: the Strip map hangs its own floor lights over each casino
-	rec.trimLights = {}
-	if rec.model:FindFirstChild("Frontage") then return end
+	-- corner spill so the rim actually lights the carpet after dark
 	for _, cx in { -sx / 2 + 2, sx / 2 - 2 } do
 		for _, cz in { -sz / 2 + 2, sz / 2 - 2 } do
 			local a = Instance.new("Attachment")
@@ -147,6 +159,15 @@ local function isPlotCandidate(inst: Instance): boolean
 	return inst:IsA("Model") or inst:IsA("Folder") or inst:IsA("BasePart")
 end
 
+-- a plot's place in the assignment order: its PlotIndex attribute (MapBuilder
+-- numbers them in CityLayout.Plots order, nearest the plaza first), else the
+-- number in its name
+local function plotOrder(inst: Instance): number
+	local idx = inst:GetAttribute("PlotIndex")
+	if type(idx) == "number" then return idx end
+	return tonumber(string.match(inst.Name, "%d+")) or math.huge
+end
+
 local function collectPlotModels(): {Instance}
 	local out = {}
 	local folder = Workspace:FindFirstChild("Plots")
@@ -163,6 +184,12 @@ local function collectPlotModels(): {Instance}
 			end
 		end
 	end
+	-- the middle of town fills up first, whatever order the instances load in
+	table.sort(out, function(a, b)
+		local ia, ib = plotOrder(a), plotOrder(b)
+		if ia ~= ib then return ia < ib end
+		return a.Name < b.Name
+	end)
 	return out
 end
 
@@ -196,6 +223,10 @@ function Plots.assign(player: Player)
 			rec.model:SetAttribute("OwnerId", player.UserId)
 			setSign(rec, player.DisplayName .. "'s Casino")
 			setTrimState(rec, true)
+			if Plots.onAssigned then
+				local ok, err = pcall(Plots.onAssigned, rec)
+				if not ok then warn("[Plots] onAssigned: " .. tostring(err)) end
+			end
 			task.defer(function()
 				local char = player.Character or player.CharacterAdded:Wait()
 				local root = char:WaitForChild("HumanoidRootPart", 5)
@@ -219,6 +250,14 @@ function Plots.release(player: Player)
 	setSign(rec, "Open Plot")
 	setTrimState(rec, false)
 	playerToPlot[player.UserId] = nil
+	if Plots.onReleased then
+		local ok, err = pcall(Plots.onReleased, rec)
+		if not ok then warn("[Plots] onReleased: " .. tostring(err)) end
+	end
+end
+
+function Plots.allRecords()
+	return plots
 end
 
 -- Public helpers ------------------------------------------------
@@ -265,6 +304,26 @@ function Plots.tooCloseToMachine(userId: number, pos: Vector3, ignore: Instance?
 			if part then
 				local d = (Vector3.new(part.Position.X, 0, part.Position.Z) - Vector3.new(pos.X, 0, pos.Z)).Magnitude
 				if d < Config.MachineSpacing then return true end
+			end
+		end
+	end
+	return false
+end
+
+-- footprint overlap on the same story: machines are treated as circles
+-- (attribute "FootprintRadius", set by Placement) with Config.MachineGap of
+-- free floor between them. Machines more than half a story apart don't clash.
+function Plots.overlapsMachine(userId: number, pos: Vector3, radius: number, ignore: Instance?): boolean
+	local rec = Plots.getRecordForOwner(userId)
+	if not rec then return true end
+	local halfStory = (Config.Building and Config.Building.StoryHeight or 16) / 2
+	for _, m in rec.machines do
+		if m ~= ignore and m.Parent then
+			local pivot = m:GetPivot().Position
+			if math.abs(pivot.Y - pos.Y) < halfStory then
+				local r = m:GetAttribute("FootprintRadius") or 2.5
+				local d = (Vector3.new(pivot.X, 0, pivot.Z) - Vector3.new(pos.X, 0, pos.Z)).Magnitude
+				if d < r + radius + (Config.MachineGap or 1) then return true end
 			end
 		end
 	end

@@ -11,7 +11,10 @@
 local CollectionService = game:GetService("CollectionService")
 local ContentProvider = game:GetService("ContentProvider")
 local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+
+local WP = require(ReplicatedStorage:WaitForChild("CasinoCommon"):WaitForChild("WorldPalette"))
 
 local MapFX = {}
 
@@ -20,10 +23,8 @@ local spheres = {}
 local wheels = {}
 local jets = {}
 
-local SPHERE_COLORS = {
-	Color3.fromHex("#9B6BFF"), Color3.fromHex("#4FC3FF"), Color3.fromHex("#FF5FC8"),
-	Color3.fromHex("#FFC24A"), Color3.fromHex("#4BE38A"), Color3.fromHex("#FF6A5A"),
-}
+-- the sphere cycles three of the world's neon hues (at most 4 on the skyline)
+local SPHERE_COLORS = { WP.Magenta, WP.Cyan, WP.Amber }
 
 local FALLBACK_SKY = "rbxassetid://45944972" -- classic star field, always available
 local SKY_FACES = { "Up", "Dn", "Ft", "Bk", "Lf", "Rt" }
